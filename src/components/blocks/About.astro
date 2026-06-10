@@ -1,0 +1,96 @@
+---
+const { title, text, image, imageSide = "right" } = Astro.props;
+
+const resolvePath = (path: string) => {
+  if (path && path.startsWith('/')) {
+    const base = import.meta.env.BASE_URL;
+    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+    return `${cleanBase}${path}`;
+  }
+  return path;
+};
+---
+<div class="about-section">
+    <h2 class="section-title reveal">{title}</h2>
+    <div class={`about-grid ${imageSide === 'left' ? 'image-left' : 'image-right'}`}>
+        {imageSide === 'left' && (
+            <div class="about-img reveal reveal-left">
+                <img src={resolvePath(image)} alt={title} />
+            </div>
+        )}
+        <div class="about-text reveal reveal-right">
+            <p>{text}</p>
+        </div>
+        {imageSide !== 'left' && (
+            <div class="about-img reveal reveal-right">
+                <img src={resolvePath(image)} alt={title} />
+            </div>
+        )}
+    </div>
+</div>
+
+<style>
+    .about-section {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 40px 48px;
+    }
+
+    .section-title {
+        font-family: 'Lora', serif;
+        font-size: 34pt;
+        color: #226E93;
+        text-align: center;
+        margin-bottom: 30px;
+        margin-top: 30px;
+        font-weight: 400;
+        letter-spacing: normal;
+        line-height: 1.2;
+    }
+
+    .about-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 50px;
+        align-items: center;
+    }
+
+    .about-grid.image-left {
+        grid-template-columns: 1fr 1.2fr;
+    }
+
+    .about-text {
+        font-family: 'Gentium Basic', serif;
+        font-size: 18pt;
+        line-height: 1.75;
+        color: rgba(44, 44, 44, 0.95);
+        text-align: left;
+    }
+
+    .about-img img {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    @media (max-width: 768px) {
+        .about-grid {
+            grid-template-columns: 1fr;
+            text-align: center;
+        }
+        .about-img {
+            max-width: 320px;
+            margin: 20px auto 0;
+        }
+        .about-grid.image-left .about-img {
+            margin: 0 auto 20px;
+        }
+        .about-section {
+            padding: 30px 24px;
+        }
+        .section-title {
+            font-size: 24pt;
+        }
+    }
+</style>

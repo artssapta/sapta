@@ -1,0 +1,92 @@
+---
+const { title, flyerImage, color = "#226E93" } = Astro.props;
+const resolvePath = (p) => p && p.startsWith('/') ? `${import.meta.env.BASE_URL.replace(/\/$/, '')}${p}` : p;
+const bgImage = resolvePath("/assets/hero_music_banner.png");
+---
+<section class="events-section">
+    <div class="events-hero" style={`background-image: url(${bgImage}); background-color: ${color};`}>
+        <div class="events-hero-overlay"></div>
+        <div class="events-hero-content">
+            <h1>{title}</h1>
+        </div>
+    </div>
+    <div class="container reveal">
+        <h2 class="section-title">Latest Flyer</h2>
+        <div class="flyer-container">
+            <img src={resolvePath(flyerImage)} alt="Event Flyer" />
+        </div>
+    </div>
+</section>
+
+<style>
+    .events-section {}
+
+    .events-hero {
+        position: relative;
+        height: 180px;
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        padding-bottom: 32px;
+        padding-top: 60px;
+    }
+    .events-hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(34, 110, 147, 0.12); /* Very light teal overlay */
+        z-index: 1;
+    }
+    .events-hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+    }
+    .events-hero h1 {
+        font-family: 'Lora', serif;
+        font-size: 45pt;
+        font-weight: 400;
+        color: white;
+        line-height: 1.1;
+    }
+
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 40px 48px;
+    }
+
+    .section-title {
+        font-family: 'Lora', serif;
+        font-size: 34pt;
+        color: #226E93;
+        text-align: center;
+        margin-bottom: 20px;
+        margin-top: 30px;
+        font-weight: 400;
+        line-height: 1.2;
+    }
+
+    .flyer-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .flyer-container img {
+        max-width: 100%;
+        height: auto;
+        max-height: 80vh;
+        object-fit: contain;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border-radius: 6px;
+    }
+
+    @media (max-width: 767px) {
+        .events-hero h1 { font-size: 30pt; }
+        .section-title { font-size: 24pt; }
+        .container { padding: 30px 24px; }
+    }
+</style>

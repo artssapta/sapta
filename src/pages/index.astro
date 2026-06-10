@@ -1,0 +1,409 @@
+---
+import { getEntry } from 'astro:content';
+import Hero from '../components/blocks/Hero.astro';
+import About from '../components/blocks/About.astro';
+import Events from '../components/blocks/Events.astro';
+import TeamGrid from '../components/blocks/TeamGrid.astro';
+import GoogleForm from '../components/blocks/GoogleForm.astro';
+import TextBlock from '../components/blocks/TextBlock.astro';
+import YouTubeVideo from '../components/blocks/YouTubeVideo.astro';
+import Gallery from '../components/blocks/Gallery.astro';
+
+const homePage = await getEntry('pages', 'home');
+const eventsPage = await getEntry('pages', 'events');
+const feedbackPage = await getEntry('pages', 'feedback');
+const regSpotlightPage = await getEntry('pages', 'reg-spotlight');
+const regGroupPage = await getEntry('pages', 'reg-group');
+const mediaPastPage = await getEntry('pages', 'media-past');
+const mediaVideosPage = await getEntry('pages', 'media-videos');
+
+const homeBlocks = homePage?.data?.blocks || [];
+const eventsBlocks = eventsPage?.data?.blocks || [];
+const feedbackBlocks = feedbackPage?.data?.blocks || [];
+const regSpotlightBlocks = regSpotlightPage?.data?.blocks || [];
+const regGroupBlocks = regGroupPage?.data?.blocks || [];
+const mediaPastBlocks = mediaPastPage?.data?.blocks || [];
+const mediaVideosBlocks = mediaVideosPage?.data?.blocks || [];
+
+const components = {
+  hero: Hero,
+  about: About,
+  'team-grid': TeamGrid,
+  text: TextBlock,
+  youtube: YouTubeVideo,
+  gallery: Gallery,
+  events: Events,
+  'google-form': GoogleForm,
+};
+
+const resolvePath = (p) => p && p.startsWith('/') ? `${import.meta.env.BASE_URL.replace(/\/$/, '')}${p}` : p;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAPTA | Student Artists' Platform</title>
+    <meta name="description" content="SAPTA is a non-profit, student-led organization that promotes Carnatic music. While providing students of all levels opportunities to perform, they also have a way to showcase their talents in unique ways.">
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,700;1,400&family=Gentium+Basic:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sapta-teal: #226E93;
+            --sapta-teal-dark: #1e6c93;
+            --text-main: rgba(33,33,33,1);
+            --font-serif: 'Gentium Basic', serif;
+            --font-heading: 'Lora', serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-serif);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            line-height: 1.6667;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* ===================== */
+        /* TOP NAVIGATION        */
+        /* ===================== */
+        header {
+            background: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid #f0f0f0;
+            height: 70px;
+            display: flex;
+            align-items: center;
+        }
+        nav {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .nav-logo img {
+            height: 36px;
+            border-radius: 4px;
+        }
+        .nav-logo span {
+            font-family: var(--font-heading);
+            font-size: 16pt;
+            color: #333333;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+        .nav-links li, .nav-links .dropdown-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 10.5pt;
+            color: #555555;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            padding: 8px 0;
+        }
+        .nav-links li:hover, .nav-links .dropdown:hover .dropdown-label {
+            color: #226E93;
+        }
+        .nav-links li::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #226E93;
+            transform: scaleX(0);
+            transform-origin: bottom right;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .nav-links li:hover::after, .nav-links li.active::after {
+            transform: scaleX(1);
+            transform-origin: bottom left;
+        }
+        .nav-links li.active {
+            color: #226E93;
+        }
+        
+        /* Dropdowns */
+        .dropdown {
+            position: relative;
+        }
+        .dropdown-label::after {
+            content: ' ▾';
+            font-size: 0.8em;
+            vertical-align: middle;
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            background: #ffffff;
+            min-width: 180px;
+            top: 100%;
+            right: 0;
+            padding: 8px 0;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            list-style: none;
+            z-index: 1010;
+        }
+        .dropdown-menu li {
+            padding: 10px 20px;
+            font-size: 9.5pt;
+            color: #444444;
+            transition: background 0.2s, color 0.2s;
+            border-bottom: none;
+        }
+        .dropdown-menu li::after {
+            display: none; /* No underlines in dropdown items */
+        }
+        .dropdown-menu li:hover {
+            background: #f5f5f5;
+            color: #226E93;
+        }
+        .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+
+        /* ===================== */
+        /* MAIN CONTENT          */
+        /* ===================== */
+        .main-content {
+            flex: 1;
+            min-height: calc(100vh - 70px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Tab content */
+        .tab-content { 
+            display: none; 
+            flex: 1; 
+            opacity: 0;
+        }
+        .tab-content.active { 
+            display: block; 
+            animation: tabFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
+        }
+        @keyframes tabFadeIn { 
+            from { opacity: 0; transform: translateY(15px) scale(0.99); } 
+            to { opacity: 1; transform: translateY(0) scale(1); } 
+        }
+
+        /* ===================== */
+        /* SCROLL REVEALS        */
+        /* ===================== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(35px) scale(0.985);
+            transition: opacity 1.3s cubic-bezier(0.16, 1, 0.3, 1), transform 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-left { transform: translate(-30px, 20px) scale(0.985); }
+        .reveal-right { transform: translate(30px, 20px) scale(0.985); }
+        .reveal.visible { opacity: 1; transform: translate(0) scale(1); }
+
+        /* ===================== */
+        /* WHITE CONTENT AREA    */
+        /* ===================== */
+        .page-body {
+            background-color: transparent;
+        }
+
+        /* ===================== */
+        /* FOOTER                */
+        /* ===================== */
+        footer {
+            background-color: #212121;
+            color: rgba(255,255,255,0.87);
+            padding: 32px 48px;
+            font-family: var(--font-heading);
+            font-size: 12pt;
+        }
+        footer h3 {
+            font-size: 15pt;
+            font-weight: 400;
+            margin-bottom: 8px;
+            color: rgba(73, 170, 212, 1);
+        }
+        footer p {
+            font-family: var(--font-serif);
+            font-size: 11pt;
+            color: rgba(255,255,255,0.6);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP NAVIGATION -->
+    <header>
+        <nav>
+            <div class="nav-logo" onclick="showTab('home')">
+                <img src={resolvePath("/assets/image_186b79.png")} alt="Logo">
+                <span>SAPTA</span>
+            </div>
+            <ul class="nav-links">
+                <li class="active" id="nav-home" onclick="showTab('home')">About Us</li>
+                <li id="nav-events" onclick="showTab('events')">Events</li>
+                <li id="nav-feedback" onclick="showTab('feedback')">Feedback Form</li>
+                <li class="dropdown" id="nav-registration">
+                    <span class="dropdown-label">Registration</span>
+                    <ul class="dropdown-menu">
+                        <li onclick="showTab('reg-spotlight')">Sapta Spotlight</li>
+                        <li onclick="showTab('reg-group')">Group Registration</li>
+                    </ul>
+                </li>
+                <li class="dropdown" id="nav-media">
+                    <span class="dropdown-label">Media</span>
+                    <ul class="dropdown-menu">
+                        <li onclick="showTab('media-past')">Past Events</li>
+                        <li onclick="showTab('media-videos')">Videos/Performances</li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+        <main id="home" class="tab-content active page-body">
+            {homeBlocks.map((block) => {
+                const Component = components[block.type];
+                return Component ? <Component {...block} /> : null;
+            })}
+        </main>
+
+        <section id="events" class="tab-content page-body">
+            {eventsBlocks.map((block) => {
+                const Component = components[block.type];
+                return Component ? <Component {...block} /> : null;
+            })}
+        </section>
+
+        <section id="feedback" class="tab-content page-body">
+            {feedbackBlocks.map((block) => {
+                const Component = components[block.type];
+                return Component ? <Component {...block} /> : null;
+            })}
+        </section>
+
+        <section id="reg-spotlight" class="tab-content page-body">
+            {regSpotlightBlocks.map((block) => {
+                const Component = components[block.type];
+                return Component ? <Component {...block} /> : null;
+            })}
+        </section>
+
+        <section id="reg-group" class="tab-content page-body">
+            {regGroupBlocks.map((block) => {
+                const Component = components[block.type];
+                return Component ? <Component {...block} /> : null;
+            })}
+        </section>
+
+        <section id="media-past" class="tab-content page-body">
+            {mediaPastBlocks.map((block) => {
+                const Component = components[block.type];
+                return Component ? <Component {...block} /> : null;
+            })}
+        </section>
+
+        <section id="media-videos" class="tab-content page-body">
+            {mediaVideosBlocks.map((block) => {
+                const Component = components[block.type];
+                return Component ? <Component {...block} /> : null;
+            })}
+        </section>
+
+
+        <footer>
+            <h3>Contact Us</h3>
+            <p>Email: artssapta@gmail.com</p>
+        </footer>
+    </div>
+
+    <script is:inline>
+        // --- Tab Navigation ---
+        const NAV_LINKS = ['home', 'events', 'feedback'];
+
+        function showTab(tabId) {
+            // Hide all
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // Show target
+            const target = document.getElementById(tabId);
+            if (target) target.classList.add('active');
+
+            // Update active nav link for top-level items
+            document.querySelectorAll('.nav-links li').forEach(el => el.classList.remove('active'));
+            
+            // Highlight active tab link
+            const navLink = document.getElementById('nav-' + tabId);
+            if (navLink) {
+                navLink.classList.add('active');
+            } else {
+                // If it's a sub-item, highlight the parent dropdown
+                if (tabId.startsWith('reg-')) {
+                    const parent = document.getElementById('nav-registration');
+                    if (parent) parent.classList.add('active');
+                } else if (tabId.startsWith('media-')) {
+                    const parent = document.getElementById('nav-media');
+                    if (parent) parent.classList.add('active');
+                }
+            }
+
+            // Re-init scroll reveals
+            setTimeout(initScrollReveal, 60);
+            window.scrollTo(0, 0);
+        }
+
+        // --- Scroll Reveal ---
+        function initScrollReveal() {
+            const reveals = document.querySelectorAll('.reveal:not(.visible)');
+            const observer = new IntersectionObserver((entries, obs) => {
+                let delay = 0;
+                const intersecting = entries
+                    .filter(e => e.isIntersecting)
+                    .sort((a, b) => a.target.getBoundingClientRect().top - b.target.getBoundingClientRect().top);
+
+                intersecting.forEach(entry => {
+                    const el = entry.target;
+                    obs.unobserve(el);
+                    setTimeout(() => {
+                        el.classList.add('visible');
+                    }, delay);
+                    delay += 100;
+                });
+            }, { threshold: 0.04, rootMargin: '0px 0px -30px 0px' });
+
+            reveals.forEach(el => observer.observe(el));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initScrollReveal();
+        });
+    </script>
+</body>
+</html>

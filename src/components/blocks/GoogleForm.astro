@@ -1,0 +1,16 @@
+---
+const { url, height = "600px" } = Astro.props;
+---
+<div class="container">
+    <iframe src={url} style={`height: ${height};`}>Loading…</iframe>
+</div>
+
+<style>
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+    iframe { 
+        width: 100%; 
+        border: none; 
+        background: #f9f9f9; 
+        border-radius: 4px; 
+    }
+</style>

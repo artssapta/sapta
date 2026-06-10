@@ -1,0 +1,66 @@
+---
+const { title, subtitle, color = "#226E93" } = Astro.props;
+const resolvePath = (p) => p && p.startsWith('/') ? `${import.meta.env.BASE_URL.replace(/\/$/, '')}${p}` : p;
+const bgImage = resolvePath("/assets/hero_music_banner.png");
+---
+<section class="hero" style={`background-image: url(${bgImage}); background-color: ${color};`}>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1>{title}</h1>
+        {subtitle && <p>{subtitle}</p>}
+    </div>
+</section>
+
+<style>
+    .hero { 
+        position: relative;
+        height: 300px; 
+        background-size: cover;
+        background-position: center;
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        text-align: center; 
+        color: white; 
+        margin-bottom: 40px; 
+        overflow: hidden;
+    }
+
+    .hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(34, 110, 147, 0.12); /* Very light teal overlay */
+        z-index: 1;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        padding: 60px 48px;
+    }
+
+    .hero h1 {
+        font-family: 'Lora', serif;
+        font-size: 64pt;
+        font-weight: 400;
+        line-height: 1;
+        letter-spacing: -1px;
+        margin-top: 40px;
+        margin-bottom: 0;
+        color: white;
+    }
+
+    .hero p {
+        font-family: 'Lora', serif;
+        font-size: 25pt;
+        font-weight: 400;
+        line-height: 1.1;
+        margin-top: 25px;
+        color: white;
+    }
+
+    @media (max-width: 767px) {
+        .hero h1 { font-size: 42pt; }
+        .hero p { font-size: 19pt; }
+    }
+</style>
