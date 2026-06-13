@@ -1,30 +1,26 @@
 ---
 import { getEntry } from 'astro:content';
 import Layout from '../components/Layout.astro';
-import Hero from '../components/blocks/Hero.astro';
-import About from '../components/blocks/About.astro';
-import TeamGrid from '../components/blocks/TeamGrid.astro';
 import Events from '../components/blocks/Events.astro';
-import GoogleForm from '../components/blocks/GoogleForm.astro';
+import Hero from '../components/blocks/Hero.astro';
 import TextBlock from '../components/blocks/TextBlock.astro';
-import YouTubeVideo from '../components/blocks/YouTubeVideo.astro';
+import GoogleForm from '../components/blocks/GoogleForm.astro';
 import Gallery from '../components/blocks/Gallery.astro';
+import YouTubeVideo from '../components/blocks/YouTubeVideo.astro';
 
-const page = await getEntry('pages', 'home');
+const page = await getEntry('pages', 'events');
 const blocks = page?.data?.blocks || [];
 
 const components = {
   hero: Hero,
-  about: About,
-  'team-grid': TeamGrid,
-  text: TextBlock,
-  youtube: YouTubeVideo,
-  gallery: Gallery,
   events: Events,
+  text: TextBlock,
   'google-form': GoogleForm,
+  gallery: Gallery,
+  youtube: YouTubeVideo,
 };
 ---
-<Layout title="SAPTA | Student Artists' Platform">
+<Layout title="Events | SAPTA">
     {blocks.map((block) => {
         const Component = components[block.type];
         return Component ? <Component {...block} /> : null;
