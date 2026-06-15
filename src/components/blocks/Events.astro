@@ -88,7 +88,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                 {/* Media Row - Video on Left, Gallery on Right */}
                 {((event.videos && event.videos.length > 0) || (event.gallery && event.gallery.length > 0)) && (
                     <div class="event-media-row reveal">
-                        {/* Videos (Left Column) */}
+                        {/* Videos (Left Column - 40% Width) */}
                         {event.videos && event.videos.length > 0 && (
                             <div class={`event-videos-col ${(!event.gallery || event.gallery.length === 0) ? 'full-width' : ''}`}>
                                 <h3 class="media-title">Videos & Performances</h3>
@@ -115,7 +115,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                             </div>
                         )}
 
-                        {/* Gallery (Right Column) */}
+                        {/* Gallery (Right Column - 60% Width) */}
                         {event.gallery && event.gallery.length > 0 && (
                             <div class={`event-gallery-col ${(!event.videos || event.videos.length === 0) ? 'full-width' : ''}`}>
                                 <h3 class="media-title">Event Gallery</h3>
@@ -123,7 +123,11 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                                     <div class="photo-grid">
                                         {event.gallery.map((img) => (
                                             <div class="photo-card">
-                                                <img src={resolvePath(img.src)} alt={img.alt || "Event gallery photo"} />
+                                                <img 
+                                                    src={resolvePath(img.src)} 
+                                                    alt={img.alt || "Event gallery photo"} 
+                                                    loading="lazy"
+                                                />
                                             </div>
                                         ))}
                                     </div>
@@ -135,40 +139,80 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
             </div>
         ))}
     </div>
+
+    {/* Lightbox Modal */}
+    <div id="lightbox-modal" class="lightbox-modal">
+        <span class="lightbox-close">&times;</span>
+        <img class="lightbox-content" id="lightbox-img" src="" alt="Enlarged view" />
+    </div>
 </section>
 
 <script is:inline>
-  // Client-side script to switch between event panels
+  // Tab selector & Lightbox script
   document.addEventListener('DOMContentLoaded', () => {
+    // --- Tab Selection ---
     const section = document.querySelector('.events-section');
-    if (!section) return;
-
-    const buttons = section.querySelectorAll('.event-tab-btn');
-    buttons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const targetId = btn.getAttribute('data-event-id');
-        
-        // Remove active class from buttons
-        buttons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        // Hide all panels and show the active one
-        const panels = section.querySelectorAll('.event-panel');
-        panels.forEach(panel => {
-          panel.classList.remove('active');
-          if (panel.id === `panel-${targetId}`) {
-            panel.classList.add('active');
-          }
-        });
-
-        // Trigger animations
-        setTimeout(() => {
-            if (typeof window.initScrollReveal === 'function') {
-                window.initScrollReveal();
+    if (section) {
+      const buttons = section.querySelectorAll('.event-tab-btn');
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-event-id');
+          
+          buttons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          
+          const panels = section.querySelectorAll('.event-panel');
+          panels.forEach(panel => {
+            panel.classList.remove('active');
+            if (panel.id === `panel-${targetId}`) {
+              panel.classList.add('active');
             }
-        }, 50);
+          });
+
+          setTimeout(() => {
+              if (typeof window.initScrollReveal === 'function') {
+                  window.initScrollReveal();
+              }
+          }, 50);
+        });
       });
-    });
+    }
+
+    // --- Lightbox Modal ---
+    const modal = document.getElementById('lightbox-modal');
+    const modalImg = document.getElementById('lightbox-img');
+    const closeBtn = document.querySelector('.lightbox-close');
+
+    if (modal && modalImg) {
+      // Setup image click listeners
+      document.querySelectorAll('.photo-card img, .flyer-card img').forEach(img => {
+        img.style.cursor = 'zoom-in';
+        img.addEventListener('click', () => {
+          modal.classList.add('active');
+          modalImg.src = img.src;
+          modalImg.alt = img.alt;
+        });
+      });
+
+      // Close handlers
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          modal.classList.remove('active');
+        });
+      }
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal || e.target === closeBtn) {
+          modal.classList.remove('active');
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('active')) {
+          modal.classList.remove('active');
+        }
+      });
+    }
   });
 </script>
 
@@ -361,13 +405,13 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         color: #333333;
     }
 
-    /* Media Sections */
+    /* Media Sections - Side-by-Side (40% Video, 60% Gallery) */
     .event-media-row {
         margin-top: 60px;
         border-top: 1px solid rgba(0, 0, 0, 0.06);
         padding-top: 40px;
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 4fr 6fr; /* Video 40%, Gallery 60% */
         gap: 40px;
         align-items: start;
     }
@@ -379,7 +423,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         font-weight: 400;
     }
 
-    /* Videos Grid */
+    /* Videos Column (Left) */
     .event-videos-col.full-width {
         grid-column: span 2;
     }
@@ -394,6 +438,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         overflow: hidden;
         border: 1px solid rgba(0,0,0,0.05);
         box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+        max-width: 100%;
     }
     .iframe-wrapper {
         position: relative;
@@ -420,7 +465,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         border-top: 1px solid rgba(0,0,0,0.03);
     }
 
-    /* Photo Gallery (Right Column) */
+    /* Gallery Column (Right) */
     .event-gallery-col.full-width {
         grid-column: span 2;
     }
@@ -455,11 +500,11 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
 
     .photo-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 16px;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 12px;
     }
     .event-gallery-col.full-width .photo-grid {
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 20px;
     }
     
@@ -477,11 +522,62 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     .photo-card img {
         display: block;
         width: 100%;
-        height: 110px;
+        height: 100px;
         object-fit: cover;
+        transition: opacity 0.3s;
+    }
+    .photo-card img:hover {
+        opacity: 0.9;
     }
     .event-gallery-col.full-width .photo-card img {
-        height: 160px;
+        height: 150px;
+    }
+
+    /* Lightbox Modal */
+    .lightbox-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        padding-top: 50px;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(18, 18, 18, 0.95);
+        backdrop-filter: blur(8px);
+        align-items: center;
+        justify-content: center;
+    }
+    .lightbox-modal.active {
+        display: flex;
+    }
+    .lightbox-content {
+        margin: auto;
+        display: block;
+        max-width: 90%;
+        max-height: 82vh;
+        object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        transform: scale(0.95);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .lightbox-modal.active .lightbox-content {
+        transform: scale(1);
+    }
+    .lightbox-close {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        color: #ffffff;
+        font-size: 36px;
+        font-weight: 300;
+        cursor: pointer;
+        user-select: none;
+        transition: color 0.3s;
+    }
+    .lightbox-close:hover {
+        color: #49aad4;
     }
 
     /* Mobile Responsive styles */
@@ -501,7 +597,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
             gap: 32px;
         }
         .event-videos-col, .event-gallery-col {
-            grid-column: span 2;
+            grid-column: span 1;
         }
         .photo-grid-scroll {
             max-height: none;
@@ -529,6 +625,11 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         }
         .event-description {
             font-size: 11.5pt;
+        }
+        .lightbox-close {
+            top: 15px;
+            right: 20px;
+            font-size: 30px;
         }
     }
 </style>
