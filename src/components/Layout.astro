@@ -26,6 +26,20 @@ const isActive = (href: string) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title}</title>
     <meta name="description" content={description}>
+    <link rel="icon" type="image/png" href={resolvePath("/favicon.png")} />
+    <link rel="apple-touch-icon" sizes="180x180" href={resolvePath("/favicon.png")} />
+    <script type="application/ld+json" is:inline>
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "SAPTA",
+        "url": "https://saptaarts.org",
+        "logo": "https://saptaarts.org/favicon.png",
+        "sameAs": [
+          "https://sites.google.com/view/saptaarts"
+        ]
+      }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,700;1,400&family=Gentium+Basic:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -242,13 +256,7 @@ const isActive = (href: string) => {
                         <li><a href={resolvePath('/registration/group')} class={isActive('/registration/group') ? 'active' : ''}>Group Registration</a></li>
                     </ul>
                 </li>
-                <li class="dropdown">
-                    <span class={`dropdown-label ${isActive('/media') ? 'active' : ''}`}>Media</span>
-                    <ul class="dropdown-menu">
-                        <li><a href={resolvePath('/media/past')} class={isActive('/media/past') ? 'active' : ''}>Past Events</a></li>
-                        <li><a href={resolvePath('/media/videos')} class={isActive('/media/videos') ? 'active' : ''}>Videos/Performances</a></li>
-                    </ul>
-                </li>
+
             </ul>
         </nav>
     </header>

@@ -22,8 +22,25 @@ const pages = defineCollection({
       z.object({
         type: z.literal('events'),
         title: z.string(),
-        flyerImage: z.string(),
         color: z.string().optional(),
+        events: z.array(z.object({
+          id: z.string(),
+          title: z.string(),
+          subtitle: z.string().optional(),
+          date: z.string(),
+          time: z.string().optional(),
+          location: z.string().optional(),
+          description: z.string().optional(),
+          flyerImage: z.string(),
+          gallery: z.array(z.object({
+            src: z.string(),
+            alt: z.string().optional(),
+          })).optional(),
+          videos: z.array(z.object({
+            title: z.string().optional(),
+            videoUrl: z.string(),
+          })).optional(),
+        })).optional(),
       }),
       z.object({
         type: z.literal('team-grid'),
