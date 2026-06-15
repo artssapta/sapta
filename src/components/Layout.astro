@@ -132,6 +132,33 @@ const isActive = (href: string) => {
             color: #226E93;
         }
 
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .hamburger span {
+            width: 24px;
+            height: 2px;
+            background-color: #555555;
+            transition: all 0.3s ease;
+            display: block;
+        }
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(10px, 10px);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(7px, -7px);
+        }
+
         /* Dropdowns */
         .dropdown {
             position: relative;
@@ -174,6 +201,119 @@ const isActive = (href: string) => {
         }
         .dropdown:hover .dropdown-menu {
             display: block;
+        }
+
+        /* Mobile-specific dropdown behavior */
+        .dropdown-label {
+            user-select: none;
+        }
+        .dropdown.active .dropdown-menu {
+            display: block;
+        }
+
+        /* ===================== */
+        /* MOBILE RESPONSIVENESS */
+        /* ===================== */
+        @media (max-width: 768px) {
+            header {
+                height: auto;
+                padding: 12px 0;
+            }
+            nav {
+                padding: 0 16px;
+            }
+            .nav-logo span {
+                font-size: 14pt;
+            }
+            .hamburger {
+                display: flex;
+            }
+            .nav-links {
+                position: absolute;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: #ffffff;
+                flex-direction: column;
+                gap: 0;
+                align-items: stretch;
+                padding: 12px 0;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+                box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .nav-links.active {
+                max-height: 500px;
+            }
+            .nav-links > li {
+                border-bottom: 1px solid #f0f0f0;
+            }
+            .nav-links > li > a,
+            .nav-links .dropdown-label {
+                display: block;
+                padding: 14px 20px;
+                font-size: 10pt;
+            }
+            .nav-links > li > a::after {
+                display: none;
+            }
+            .nav-links > li > a:hover {
+                background: #f5f5f5;
+            }
+            .dropdown-menu {
+                position: static;
+                box-shadow: none;
+                border: none;
+                background: #f9f9f9;
+                min-width: auto;
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease;
+            }
+            .dropdown.active .dropdown-menu {
+                max-height: 200px;
+            }
+            .dropdown-menu li a {
+                padding: 12px 40px;
+                font-size: 9.5pt;
+            }
+            .dropdown-label::after {
+                display: inline-block;
+                margin-left: 8px;
+                transition: transform 0.3s ease;
+            }
+            .dropdown.active .dropdown-label::after {
+                transform: rotate(180deg);
+            }
+        }
+
+        @media (max-width: 480px) {
+            nav {
+                padding: 0 12px;
+            }
+            .nav-logo span {
+                font-size: 12pt;
+            }
+            .nav-links > li > a,
+            .nav-links .dropdown-label {
+                padding: 12px 16px;
+                font-size: 9.5pt;
+            }
+            .dropdown-menu li a {
+                padding: 10px 32px;
+            }
+            footer {
+                padding: 24px 16px;
+                font-size: 11pt;
+            }
+            footer h3 {
+                font-size: 13pt;
+            }
+            footer p {
+                font-size: 10pt;
+            }
         }
 
         /* ===================== */
@@ -231,6 +371,11 @@ const isActive = (href: string) => {
                 <img src={resolvePath("/assets/image_186b79.png")} alt="SAPTA Logo">
                 <span>SAPTA</span>
             </a>
+            <button class="hamburger" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
             <ul class="nav-links">
                 <li><a href={resolvePath('/')} class={isActive('/') ? 'active' : ''}>About Us</a></li>
                 <li><a href={resolvePath('/events')} class={isActive('/events') ? 'active' : ''}>Events</a></li>
@@ -279,7 +424,51 @@ const isActive = (href: string) => {
             }, { threshold: 0.04, rootMargin: '0px 0px -30px 0px' });
             reveals.forEach(el => observer.observe(el));
         }
-        document.addEventListener('DOMContentLoaded', initScrollReveal);
+
+        function initMobileMenu() {
+            const hamburger = document.querySelector('.hamburger');
+            const navLinks = document.querySelector('.nav-links');
+            const dropdowns = document.querySelectorAll('.dropdown');
+
+            hamburger?.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                navLinks?.classList.toggle('active');
+            });
+
+            // Close menu when a link is clicked
+            navLinks?.addEventListener('click', (e) => {
+                if (e.target.tagName === 'A') {
+                    hamburger?.classList.remove('active');
+                    navLinks?.classList.remove('active');
+                }
+            });
+
+            // Handle dropdown toggles on mobile
+            dropdowns.forEach(dropdown => {
+                const label = dropdown.querySelector('.dropdown-label');
+                label?.addEventListener('click', (e) => {
+                    if (window.innerWidth <= 768) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        dropdown.classList.toggle('active');
+                    }
+                });
+            });
+
+            // Close dropdowns when menu closes
+            window.addEventListener('resize', () => {
+                if (window.innerWidth > 768) {
+                    hamburger?.classList.remove('active');
+                    navLinks?.classList.remove('active');
+                    dropdowns.forEach(d => d.classList.remove('active'));
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initScrollReveal();
+            initMobileMenu();
+        });
     </script>
 
 </body>
