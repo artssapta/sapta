@@ -12,7 +12,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     </div>
 
     {events.length > 0 && (
-        <div class="events-nav-container reveal">
+        <div class="events-nav-container">
             <div class="events-tabs-nav">
                 {events.map((event, index) => (
                     <button 
@@ -32,7 +32,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                 id={`panel-${event.id}`} 
                 class={`event-panel ${index === 0 ? 'active' : ''}`}
             >
-                <div class="event-details-grid reveal">
+                <div class="event-details-grid">
                     {/* Left Column - Flyer */}
                     <div class="event-flyer-col">
                         <div class="flyer-card">
@@ -87,7 +87,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
 
                 {/* Media Row - Video on Left, Gallery on Right */}
                 {((event.videos && event.videos.length > 0) || (event.gallery && event.gallery.length > 0)) && (
-                    <div class="event-media-row reveal">
+                    <div class="event-media-row">
                         {/* Videos (Left Column - 40% Width) */}
                         {event.videos && event.videos.length > 0 && (
                             <div class={`event-videos-col ${(!event.gallery || event.gallery.length === 0) ? 'full-width' : ''}`}>
@@ -168,12 +168,6 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
               panel.classList.add('active');
             }
           });
-
-          setTimeout(() => {
-              if (typeof window.initScrollReveal === 'function') {
-                  window.initScrollReveal();
-              }
-          }, 50);
         });
       });
     }
