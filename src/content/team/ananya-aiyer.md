@@ -1,6 +1,5 @@
 ---
 name: Ananya Aiyer
-role: President
 photo: "/assets/image_186af6.png"
 order: 1
 ---

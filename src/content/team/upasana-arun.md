@@ -1,6 +1,5 @@
 ---
 name: Upasana Arun
-role: Team Member
 photo: "/assets/image_186815.png"
 order: 3
 ---
