@@ -85,42 +85,51 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                     </div>
                 </div>
 
-                {/* Videos Section */}
-                {event.videos && event.videos.length > 0 && (
-                    <div class="event-media-section reveal">
-                        <h3 class="media-title">Videos & Performances</h3>
-                        <div class="videos-grid">
-                            {event.videos.map((vid) => {
-                                const videoId = vid.videoUrl.includes('v=') 
-                                    ? vid.videoUrl.split('v=')[1].split('&')[0] 
-                                    : vid.videoUrl.split('/').pop();
-                                return (
-                                    <div class="video-card">
-                                        <iframe 
-                                            src={`https://www.youtube.com/embed/${videoId}`} 
-                                            title={vid.title || "YouTube video player"} 
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                            allowfullscreen>
-                                        </iframe>
-                                        {vid.title && <p class="video-caption">{vid.title}</p>}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {/* Gallery Section */}
-                {event.gallery && event.gallery.length > 0 && (
-                    <div class="event-media-section reveal">
-                        <h3 class="media-title">Event Gallery</h3>
-                        <div class="photo-grid">
-                            {event.gallery.map((img) => (
-                                <div class="photo-card">
-                                    <img src={resolvePath(img.src)} alt={img.alt || "Event gallery photo"} />
+                {/* Media Row - Video on Left, Gallery on Right */}
+                {((event.videos && event.videos.length > 0) || (event.gallery && event.gallery.length > 0)) && (
+                    <div class="event-media-row reveal">
+                        {/* Videos (Left Column) */}
+                        {event.videos && event.videos.length > 0 && (
+                            <div class={`event-videos-col ${(!event.gallery || event.gallery.length === 0) ? 'full-width' : ''}`}>
+                                <h3 class="media-title">Videos & Performances</h3>
+                                <div class="videos-grid">
+                                    {event.videos.map((vid) => {
+                                        const videoId = vid.videoUrl.includes('v=') 
+                                            ? vid.videoUrl.split('v=')[1].split('&')[0] 
+                                            : vid.videoUrl.split('/').pop();
+                                        return (
+                                            <div class="video-card">
+                                                <div class="iframe-wrapper">
+                                                    <iframe 
+                                                        src={`https://www.youtube.com/embed/${videoId}`} 
+                                                        title={vid.title || "YouTube video player"} 
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                        allowfullscreen>
+                                                    </iframe>
+                                                </div>
+                                                {vid.title && <p class="video-caption">{vid.title}</p>}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                            ))}
-                        </div>
+                            </div>
+                        )}
+
+                        {/* Gallery (Right Column) */}
+                        {event.gallery && event.gallery.length > 0 && (
+                            <div class={`event-gallery-col ${(!event.videos || event.videos.length === 0) ? 'full-width' : ''}`}>
+                                <h3 class="media-title">Event Gallery</h3>
+                                <div class="photo-grid-scroll">
+                                    <div class="photo-grid">
+                                        {event.gallery.map((img) => (
+                                            <div class="photo-card">
+                                                <img src={resolvePath(img.src)} alt={img.alt || "Event gallery photo"} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
@@ -353,10 +362,14 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     }
 
     /* Media Sections */
-    .event-media-section {
+    .event-media-row {
         margin-top: 60px;
         border-top: 1px solid rgba(0, 0, 0, 0.06);
         padding-top: 40px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        align-items: start;
     }
     .media-title {
         font-family: 'Lora', serif;
@@ -367,10 +380,13 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     }
 
     /* Videos Grid */
+    .event-videos-col.full-width {
+        grid-column: span 2;
+    }
     .videos-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-        gap: 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
     }
     .video-card {
         background: white;
@@ -379,11 +395,20 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         border: 1px solid rgba(0,0,0,0.05);
         box-shadow: 0 4px 15px rgba(0,0,0,0.04);
     }
-    .video-card iframe {
+    .iframe-wrapper {
+        position: relative;
         width: 100%;
-        aspect-ratio: 16 / 9;
+        padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+        height: 0;
+        overflow: hidden;
+    }
+    .iframe-wrapper iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         border: none;
-        display: block;
     }
     .video-caption {
         padding: 14px;
@@ -395,12 +420,49 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         border-top: 1px solid rgba(0,0,0,0.03);
     }
 
-    /* Photo Gallery */
+    /* Photo Gallery (Right Column) */
+    .event-gallery-col.full-width {
+        grid-column: span 2;
+    }
+    
+    /* Scrollable gallery to match video height and prevent long scrolls */
+    .photo-grid-scroll {
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 8px;
+    }
+    .event-gallery-col.full-width .photo-grid-scroll {
+        max-height: none;
+        overflow-y: visible;
+        padding-right: 0;
+    }
+    
+    /* Styled Scrollbar */
+    .photo-grid-scroll::-webkit-scrollbar {
+        width: 6px;
+    }
+    .photo-grid-scroll::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.03);
+        border-radius: 4px;
+    }
+    .photo-grid-scroll::-webkit-scrollbar-thumb {
+        background: rgba(34, 110, 147, 0.25);
+        border-radius: 4px;
+    }
+    .photo-grid-scroll::-webkit-scrollbar-thumb:hover {
+        background: rgba(34, 110, 147, 0.45);
+    }
+
     .photo-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 24px;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px;
     }
+    .event-gallery-col.full-width .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 20px;
+    }
+    
     .photo-card {
         border-radius: 8px;
         overflow: hidden;
@@ -410,13 +472,16 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .photo-card:hover {
-        transform: scale(1.02);
+        transform: scale(1.03);
     }
     .photo-card img {
         display: block;
         width: 100%;
-        height: 250px;
+        height: 110px;
         object-fit: cover;
+    }
+    .event-gallery-col.full-width .photo-card img {
+        height: 160px;
     }
 
     /* Mobile Responsive styles */
@@ -431,6 +496,24 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         .event-title {
             font-size: 24pt;
         }
+        .event-media-row {
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+        .event-videos-col, .event-gallery-col {
+            grid-column: span 2;
+        }
+        .photo-grid-scroll {
+            max-height: none;
+            overflow-y: visible;
+            padding-right: 0;
+        }
+        .photo-grid {
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        }
+        .photo-card img {
+            height: 140px;
+        }
     }
 
     @media (max-width: 600px) {
@@ -440,9 +523,6 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         .event-tab-btn {
             padding: 8px 16px;
             font-size: 10pt;
-        }
-        .videos-grid {
-            grid-template-columns: 1fr;
         }
         .event-metadata {
             padding: 15px;
