@@ -175,7 +175,6 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         <span class="lightbox-close">&times;</span>
         <div class="lightbox-box">
             <img class="lightbox-content" id="lightbox-img" src="" alt="Enlarged view" />
-            <div id="lightbox-caption" class="lightbox-caption"></div>
         </div>
     </div>
 </section>
@@ -208,7 +207,6 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     // --- Lightbox Modal ---
     const modal = document.getElementById('lightbox-modal');
     const modalImg = document.getElementById('lightbox-img');
-    const modalCaption = document.getElementById('lightbox-caption');
     const closeBtn = document.querySelector('.lightbox-close');
 
     if (modal && modalImg) {
@@ -219,9 +217,6 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
           modal.classList.add('active');
           modalImg.src = img.src;
           modalImg.alt = img.alt;
-          if (modalCaption) {
-            modalCaption.textContent = img.alt || "";
-          }
         });
       });
 
