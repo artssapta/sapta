@@ -5,18 +5,6 @@ blocks:
     title: SAPTA Events
     color: "#2A7396"
     events:
-      - id: go-rakshana
-        title: Go-Rakshana
-        subtitle: Where Nada meets Karuna
-        date: "June 13, 2026"
-        time: "3 PM - 5 PM"
-        location: "Sri Karpaga Ganapathi Temple, San Ramon, CA"
-        description: "Proceeds from this event went to support Shri Krishna Brundavan Gokulam (1125 Finley Rd, Pleasanton, CA). The concert featured beautiful Carnatic vocal and instrumental music by student artists, showcasing talent while nurturing our local community."
-        flyerImage: "/assets/go_rakshana_flyer.jpg"
-        gallery:
-          - src: "/assets/go_rakshana_flyer.jpg"
-            alt: "Go-Rakshana Event Flyer"
-        videos: []
       - id: eka
         title: Eka
         subtitle: It All Begins with One
@@ -61,4 +49,16 @@ blocks:
         videos:
           - title: "Eka performance by Student Artists"
             videoUrl: "https://www.youtube.com/watch?v=F1VUwJJcerk"
+      - id: go-rakshana
+        title: Go-Rakshana
+        subtitle: Where Nada meets Karuna
+        date: "June 13, 2026"
+        time: "3 PM - 5 PM"
+        location: "Sri Karpaga Ganapathi Temple, San Ramon, CA"
+        description: "Proceeds from this event went to support Shri Krishna Brundavan Gokulam (1125 Finley Rd, Pleasanton, CA). The concert featured beautiful Carnatic vocal and instrumental music by student artists, showcasing talent while nurturing our local community."
+        flyerImage: "/assets/go_rakshana_flyer.jpg"
+        gallery:
+          - src: "/assets/go_rakshana_flyer.jpg"
+            alt: "Go-Rakshana Event Flyer"
+        videos: []
 ---
