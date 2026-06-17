@@ -59,6 +59,10 @@ blocks:
           - src: "/assets/folderImages_eka/IMG_5233.JPG"
             alt: "Eka Concert Image"
         videos:
+          - title: "Eka Performance Clip 1"
+            videoUrl: "/assets/folderImages_eka/IMG_3859.MP4"
+          - title: "Eka Performance Clip 2"
+            videoUrl: "/assets/folderImages_eka/IMG_3933.MP4"
           - title: "Eka performance by Student Artists"
             videoUrl: "https://www.youtube.com/watch?v=F1VUwJJcerk"
 ---
