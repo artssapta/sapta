@@ -212,6 +212,8 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     const closeBtn = document.querySelector('.lightbox-close');
 
     if (modal && modalImg) {
+      document.body.appendChild(modal); // Fix position: fixed containing block issue caused by CSS transforms on parent elements
+
       document.querySelectorAll('.photo-card img, .flyer-card img').forEach(img => {
         img.addEventListener('click', () => {
           modal.classList.add('active');
