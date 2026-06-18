@@ -232,12 +232,18 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
       document.querySelectorAll('.photo-card img, .flyer-card img').forEach(img => {
         img.addEventListener('click', (e) => {
           const panel = e.target.closest('.event-panel');
-          if (panel) {
-            currentImages = Array.from(panel.querySelectorAll('.photo-card img, .flyer-card img'));
+          const isFlyer = e.target.closest('.flyer-card');
+          
+          if (panel && !isFlyer) {
+            currentImages = Array.from(panel.querySelectorAll('.photo-card img'));
             currentIndex = currentImages.indexOf(img);
+            if (prevBtn) prevBtn.style.display = currentImages.length > 1 ? 'flex' : 'none';
+            if (nextBtn) nextBtn.style.display = currentImages.length > 1 ? 'flex' : 'none';
           } else {
             currentImages = [img];
             currentIndex = 0;
+            if (prevBtn) prevBtn.style.display = 'none';
+            if (nextBtn) nextBtn.style.display = 'none';
           }
           
           modal.classList.add('active');
