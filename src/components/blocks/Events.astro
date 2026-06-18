@@ -173,10 +173,10 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     {/* Lightbox Modal */}
     <div id="lightbox-modal" class="lightbox-modal">
         <span class="lightbox-close">&times;</span>
-        <button class="lightbox-prev" aria-label="Previous image">&#10094;</button>
-        <button class="lightbox-next" aria-label="Next image">&#10095;</button>
         <div class="lightbox-box">
+            <button class="lightbox-prev" aria-label="Previous image">&#10094;</button>
             <img class="lightbox-content" id="lightbox-img" src="" alt="Enlarged view" />
+            <button class="lightbox-next" aria-label="Next image">&#10095;</button>
         </div>
     </div>
 </section>
@@ -726,14 +726,20 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         transform: translateY(-50%) scale(1.05);
     }
     .lightbox-prev {
-        left: 30px;
+        left: -60px;
     }
     .lightbox-next {
-        right: 30px;
+        right: -60px;
     }
 
     /* Mobile Responsive styles */
     @media (max-width: 960px) {
+        .lightbox-prev {
+            left: 10px;
+        }
+        .lightbox-next {
+            right: 10px;
+        }
         .event-main-grid {
             grid-template-columns: 1fr;
             gap: 48px;
