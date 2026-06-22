@@ -1,5 +1,6 @@
 ---
 name: Anusha Naveen
+role: Co-Founder
 photo: "/assets/image_17faba.png"
 order: 4
 ---

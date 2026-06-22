@@ -1,5 +1,6 @@
 ---
 name: Ananya Aiyer
+role: Founder
 photo: "/assets/image_186af6.png"
 order: 1
 ---

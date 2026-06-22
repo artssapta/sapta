@@ -1,5 +1,6 @@
 ---
 name: Shravya Rengan
+role: Co-Founder
 photo: "/assets/image_186aba.png"
 order: 5
 ---
