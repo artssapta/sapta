@@ -378,7 +378,13 @@ const isActive = (href: string) => {
             </button>
             <ul class="nav-links">
                 <li><a href={resolvePath('/')} class={isActive('/') ? 'active' : ''}>About Us</a></li>
-                <li><a href={resolvePath('/events')} class={isActive('/events') ? 'active' : ''}>Events</a></li>
+                <li class="dropdown">
+                    <span class={`dropdown-label ${isActive('/events') ? 'active' : ''}`}>Events</span>
+                    <ul class="dropdown-menu">
+                        <li><a href={resolvePath('/events')} class={isActive('/events') ? 'active' : ''}>All Events</a></li>
+                        <li><a href={resolvePath('/events/go-rakshana')} class={isActive('/events/go-rakshana') ? 'active' : ''}>Go Rakshana</a></li>
+                    </ul>
+                </li>
                 <li><a href={resolvePath('/feedback')} class={isActive('/feedback') ? 'active' : ''}>Feedback Form</a></li>
                 <li class="dropdown">
                     <span class={`dropdown-label ${isActive('/registration') ? 'active' : ''}`}>Registration</span>
