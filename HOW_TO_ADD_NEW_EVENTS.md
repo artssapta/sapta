@@ -1,43 +1,68 @@
-# How to Add a New Event to the SAPTA Website
+# Guide: How to Add New Events and Photos (No Coding Required)
 
-Adding a new event is incredibly easy! You **do not** need to create any new HTML files or code anything from scratch. The website is built to automatically generate the beautiful layout you see right now as long as you provide the text and images.
+This guide shows you how to add new events or update photos/videos on the website. You **do not** need any coding experience! You only need to edit one text file.
 
-All you have to do is edit a single file: `src/content/pages/events.md`
+The events file is located at: `src/content/pages/events.md`
 
-## Steps to Add a New Event
+---
 
-1. **Add your images and videos:**
-   - Put your event photos and flyer inside the `public/assets/` folder (you can create a new subfolder for them like `public/assets/my_new_event/`).
+## 📋 The Main Steps
 
-2. **Open the events file:**
-   - Open `src/content/pages/events.md` in your code editor.
+1. **Upload your photos to Cloudinary** (e.g. `https://cloudinary.com`).
+2. **Copy the image links** from Cloudinary.
+3. **Open the events file** (`events.md`) in your editor.
+4. **Copy and paste the template** (below) at the top of the `events:` list.
 
-3. **Copy and Paste the Template:**
-   - Find the `events:` section in the file.
-   - Copy the template below and paste it as a new entry under `events:`. Be sure to keep the indentation (spaces) the exact same as the other events!
+---
 
-### The Event Template
+## 📝 The Event Template (Copy & Paste)
+
+Copy this block of text, paste it under the `events:` line in `src/content/pages/events.md`, and replace the text inside the quotes with your event details:
 
 ```yaml
-      - id: my-new-event                     # A unique ID for the event (no spaces)
-        title: My Amazing Event              # The main title
-        subtitle: A beautiful subtitle       # Optional subtitle
-        date: "October 20, 2026"             # Date of the event
-        time: "4 PM - 7 PM"                  # Optional time
-        location: "San Ramon, CA"            # Optional location
-        description: "This is a detailed description of the event. You can write as much as you want here."
-        flyerImage: "/assets/my_flyer.jpg"   # The path to the main flyer image
-        gallery:                             # A list of all photos for the event
-          - src: "/assets/photo1.jpg"
-            alt: "Concert Photo 1"
-          - src: "/assets/photo2.jpg"
-            alt: "Concert Photo 2"
-        videos:                              # A list of YouTube links
-          - title: "Performance Part 1"
-            videoUrl: "https://www.youtube.com/watch?v=YOUR_LINK_HERE"
+      - id: unique-event-name                # A unique ID for this event (use lowercase and hyphens, no spaces. e.g. "summer-concert")
+        title: "Name of Event"               # The main title displayed on the site
+        subtitle: "A Catchy Subtitle"        # Optional: A short subtitle/slogan. If none, delete this line.
+        date: "June 25, 2026"                # The date of the event
+        time: "3 PM - 5 PM"                  # Optional: Time of the event. If none, delete this line.
+        location: "Location Name, City, CA"  # Optional: Location of the event. If none, delete this line.
+        description: "Write your event description here. You can write as many sentences as you want."
+        flyerImage: "/assets/flyer_name.jpg" # The image path for the event flyer.
+        gallery:                             # The list of photo links from Cloudinary
+          - src: "https://res.cloudinary.com/.../photo1.jpg"
+            alt: "Caption describing photo 1"  # This is the caption/description for the photo
+          - src: "https://res.cloudinary.com/.../photo2.jpg"
+            alt: "Caption describing photo 2"
+        videos:                              # Optional: YouTube links for performances
+          - title: "Performance Title"
+            videoUrl: "https://www.youtube.com/watch?v=..."
 ```
 
-### Tips
-- **Order matters!** Whichever event is listed first in the file will be the one that shows up first on the website.
-- **YouTube Links:** You can just paste standard YouTube links under `videoUrl`.
-- **Missing Information:** If you don't have videos, just leave `videos: []`. If you don't have a time, you can delete the `time:` line entirely!
+---
+
+## 💡 Quick Tips for Beginners
+
+### 1. Formatting & Spacing (Crucial!)
+YAML files (like `events.md`) are very sensitive to spacing.
+* **Never use the Tab key** to align lines. Always use the Spacebar.
+* Make sure your new event starts with `- id:` and aligns exactly with the other events in the file.
+* Keep the quotes (`""`) around your text fields.
+
+### 2. How to Add Captions/Descriptions to Photos
+In the gallery list, each photo has an `alt:` line:
+```yaml
+          - src: "https://res.cloudinary.com/.../photo1.jpg"
+            alt: "Group photo of all performing student artists"
+```
+The text you type inside the quotes after `alt:` serves as the description and accessibility caption for that specific photo.
+
+### 3. How to Order Your Events
+The website displays events in the exact order they are listed in the file.
+* If you want a new event to show up **first**, paste its block at the very top of the list (right under the `events:` line).
+* If you want it to show up **second**, paste it below the first event block.
+
+### 4. Handling Missing Info
+If you don't have something, you don't need to leave empty placeholder lines. You can just delete them or leave them empty:
+* No videos? Write: `videos: []`
+* No photos? Write: `gallery: []`
+* No subtitle? Simply delete the `subtitle:` line entirely.
