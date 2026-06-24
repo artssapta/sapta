@@ -437,16 +437,21 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         border-radius: 24px;
         border: 1px solid rgba(255, 255, 255, 0.35);
         box-shadow: 0 20px 50px -10px rgba(18, 55, 75, 0.08);
-        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+        transition: background-color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+        /* Hardware acceleration to prevent edge pixelation and flickering */
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
     }
 
     .details-text-card:hover,
     .flyer-card:hover,
     .event-videos-section:hover,
     .event-gallery-section:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 30px 60px -15px rgba(18, 55, 75, 0.12);
-        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.28);
+        box-shadow: 0 20px 50px -5px rgba(34, 110, 147, 0.15);
+        border-color: rgba(255, 255, 255, 0.55);
     }
 
     .videos-grid {
