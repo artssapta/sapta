@@ -425,14 +425,30 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         user-select: none;
     }
 
-    .event-videos-section {
-        background: rgba(255, 255, 255, 0.45);
-        backdrop-filter: blur(12px);
+    /* Glassmorphic Unified Cards */
+    .details-text-card,
+    .flyer-card,
+    .event-videos-section,
+    .event-gallery-section {
+        background: rgba(255, 255, 255, 0.22);
+        backdrop-filter: blur(24px) saturate(140%);
+        -webkit-backdrop-filter: blur(24px) saturate(140%);
         padding: 36px;
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        box-shadow: 0 20px 40px -20px rgba(34, 110, 147, 0.06);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        box-shadow: 0 20px 50px -10px rgba(18, 55, 75, 0.08);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease;
     }
+
+    .details-text-card:hover,
+    .flyer-card:hover,
+    .event-videos-section:hover,
+    .event-gallery-section:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 30px 60px -15px rgba(18, 55, 75, 0.12);
+        border-color: rgba(255, 255, 255, 0.5);
+    }
+
     .videos-grid {
         display: flex;
         flex-direction: column;
@@ -487,14 +503,6 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     }
 
     /* Gallery Styling */
-    .event-gallery-section {
-        background: rgba(255, 255, 255, 0.45);
-        backdrop-filter: blur(12px);
-        padding: 36px;
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        box-shadow: 0 20px 40px -20px rgba(34, 110, 147, 0.06);
-    }
     .photo-grid-scroll {
         max-height: 520px;
         overflow-y: auto;
@@ -565,12 +573,6 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     
     /* Flyer Card (Top of Left Column) */
     .flyer-card {
-        background: rgba(255, 255, 255, 0.45);
-        backdrop-filter: blur(12px);
-        padding: 36px;
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        box-shadow: 0 20px 40px -20px rgba(34, 110, 147, 0.06);
         margin-bottom: 0;
         max-width: 100%;
         cursor: pointer;
@@ -595,12 +597,6 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
 
     /* Details Card */
     .details-text-card {
-        background: rgba(255, 255, 255, 0.45);
-        backdrop-filter: blur(12px);
-        padding: 36px;
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        box-shadow: 0 20px 40px -20px rgba(34, 110, 147, 0.06);
         margin-bottom: 40px;
     }
     .event-title {
