@@ -103,7 +103,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                     {/* Right Column - Media (Videos & Photos) */}
                     <div class="event-media-col">
                         {/* Videos */}
-                        {event.videos && event.videos.length > 0 && (
+                        {event.videos && event.videos.length > 0 ? (
                             <div class="event-videos-section">
                                 <h3 class="media-title">Videos & Performances</h3>
                                 <div class="videos-grid">
@@ -140,6 +140,15 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                                             </div>
                                         );
                                     })}
+                                </div>
+                            </div>
+                        ) : (
+                            <div class="event-videos-section placeholder-videos">
+                                <h3 class="media-title">Videos & Performances</h3>
+                                <div class="videos-grid">
+                                    <div class="video-card">
+                                        <div class="iframe-wrapper"></div>
+                                    </div>
                                 </div>
                             </div>
                         )}
@@ -408,6 +417,12 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         padding-bottom: 12px;
         margin-bottom: 20px;
         letter-spacing: -0.2px;
+    }
+    
+    .placeholder-videos {
+        opacity: 0;
+        pointer-events: none;
+        user-select: none;
     }
 
     /* Videos Styling */
@@ -749,6 +764,9 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         .event-main-grid {
             grid-template-columns: 1fr;
             gap: 48px;
+        }
+        .placeholder-videos {
+            display: none;
         }
         .event-info-col {
             grid-row: 1; /* Poster and info at the top on mobile */
