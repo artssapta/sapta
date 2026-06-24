@@ -105,7 +105,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                         {/* Videos */}
                         {event.videos && event.videos.length > 0 ? (
                             <div class="event-videos-section">
-                                <h3 class="media-title">Videos & Performances</h3>
+                                <h3 class="media-title">Relive the Moment</h3>
                                 <div class="videos-grid">
                                     {event.videos.map((vid) => {
                                         const isLocal = vid.videoUrl.endsWith('.mp4') || vid.videoUrl.endsWith('.MP4') || vid.videoUrl.startsWith('/assets/');
@@ -144,7 +144,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                             </div>
                         ) : (
                             <div class="event-videos-section placeholder-videos">
-                                <h3 class="media-title">Videos & Performances</h3>
+                                <h3 class="media-title">Relive the Moment</h3>
                                 <div class="videos-grid">
                                     <div class="video-card">
                                         <div class="iframe-wrapper"></div>
@@ -425,25 +425,28 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         user-select: none;
     }
 
-    /* Videos Styling */
+    .event-videos-section {
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(12px);
+        padding: 36px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 20px 40px -20px rgba(34, 110, 147, 0.06);
+    }
     .videos-grid {
         display: flex;
         flex-direction: column;
         gap: 30px;
     }
     .video-card {
-        background: #ffffff;
-        border-radius: 16px;
+        border-radius: 12px;
         overflow: hidden;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.06);
         max-width: 580px; /* Video is kept neat and professional */
         width: 100%;
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .video-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
     }
     .iframe-wrapper {
         position: relative;
@@ -451,6 +454,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         padding-bottom: 56.25%; /* 16:9 aspect ratio */
         height: 0;
         overflow: hidden;
+        border-radius: 12px;
     }
     .iframe-wrapper iframe {
         position: absolute;
@@ -465,6 +469,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         aspect-ratio: 16 / 9;
         overflow: hidden;
         background: #000000;
+        border-radius: 12px;
     }
     .local-video {
         width: 100%;
@@ -473,17 +478,23 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         object-fit: contain;
     }
     .video-caption {
-        padding: 14px 20px;
+        margin-top: 14px;
         font-family: 'Inter', sans-serif;
         font-size: 10pt;
         font-weight: 500;
         color: #444444;
         text-align: center;
-        background: #fafafa;
-        border-top: 1px solid rgba(0,0,0,0.03);
     }
 
     /* Gallery Styling */
+    .event-gallery-section {
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(12px);
+        padding: 36px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 20px 40px -20px rgba(34, 110, 147, 0.06);
+    }
     .photo-grid-scroll {
         max-height: 520px;
         overflow-y: auto;
@@ -554,11 +565,12 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     
     /* Flyer Card (Top of Left Column) */
     .flyer-card {
-        border-radius: 16px;
-        overflow: hidden;
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.12);
-        background: #ffffff;
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(12px);
+        padding: 36px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        box-shadow: 0 20px 40px -20px rgba(34, 110, 147, 0.06);
         margin-bottom: 0;
         max-width: 100%;
         cursor: pointer;
@@ -575,6 +587,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         max-height: 520px;
         object-fit: contain;
         transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        border-radius: 12px;
     }
     .flyer-card:hover img {
         transform: scale(1.02);
