@@ -84,5 +84,7 @@ blocks:
             alt: "Go-Rakshana Event Image"
           - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263303/20260613_154052_sjen2x.jpg"
             alt: "Go-Rakshana Event Image"
-        videos: []
+        videos:
+          - title: "Go-Rakshana performance by Student Artists"
+            videoUrl: "https://www.youtube.com/watch?v=K2RPGrBGUgY"
 ---
