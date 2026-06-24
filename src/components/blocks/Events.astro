@@ -35,12 +35,6 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                 <div class="event-main-grid">
                     {/* Left Column - Flyer & Information */}
                     <div class="event-info-col">
-                        <div class="flyer-card">
-                            <div class="flyer-card-inner">
-                                <img src={resolvePath(event.flyerImage)} alt={`${event.title} Flyer`} />
-                            </div>
-                        </div>
-
                         <div class="details-text-card">
                             <h2 class="event-title">{event.title}</h2>
                             {event.subtitle && <p class="event-subtitle">{event.subtitle}</p>}
@@ -97,6 +91,12 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                                     <p>{event.description}</p>
                                 </div>
                             )}
+                        </div>
+
+                        <div class="flyer-card">
+                            <div class="flyer-card-inner">
+                                <img src={resolvePath(event.flyerImage)} alt={`${event.title} Flyer`} />
+                            </div>
                         </div>
                     </div>
 
@@ -559,7 +559,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         border: 1px solid rgba(255, 255, 255, 0.6);
         box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.12);
         background: #ffffff;
-        margin-bottom: 40px;
+        margin-bottom: 0;
         max-width: 100%;
         cursor: pointer;
     }
@@ -588,6 +588,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         border-radius: 20px;
         border: 1px solid rgba(255, 255, 255, 0.5);
         box-shadow: 0 20px 40px -20px rgba(34, 110, 147, 0.06);
+        margin-bottom: 40px;
     }
     .event-title {
         font-family: 'Lora', serif;
