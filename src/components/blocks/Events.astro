@@ -336,13 +336,12 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         padding: 0 20px;
     }
     .events-tabs-nav {
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(16px);
+        background: #ffffff;
         padding: 6px;
         border-radius: 30px;
         display: inline-flex;
         gap: 4px;
-        border: 1px solid rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(0, 0, 0, 0.08);
         box-shadow: 0 10px 30px -10px rgba(34, 110, 147, 0.12);
     }
     .event-tab-btn {
@@ -425,33 +424,26 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         user-select: none;
     }
 
-    /* Glassmorphic Unified Cards */
+    /* Unified Cards */
     .details-text-card,
     .flyer-card,
     .event-videos-section,
     .event-gallery-section {
-        background: rgba(255, 255, 255, 0.22);
-        backdrop-filter: blur(24px) saturate(140%);
-        -webkit-backdrop-filter: blur(24px) saturate(140%);
+        background: #ffffff;
         padding: 36px;
         border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.35);
-        box-shadow: 0 20px 50px -10px rgba(18, 55, 75, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 15px 35px -10px rgba(18, 55, 75, 0.06);
         transition: background-color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
-        /* Hardware acceleration to prevent edge pixelation and flickering */
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
     }
 
     .details-text-card:hover,
     .flyer-card:hover,
     .event-videos-section:hover,
     .event-gallery-section:hover {
-        background: rgba(255, 255, 255, 0.28);
-        box-shadow: 0 20px 50px -5px rgba(34, 110, 147, 0.15);
-        border-color: rgba(255, 255, 255, 0.55);
+        background: #ffffff;
+        box-shadow: 0 20px 45px -5px rgba(34, 110, 147, 0.1);
+        border-color: rgba(34, 110, 147, 0.2);
     }
 
     .videos-grid {
@@ -687,8 +679,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         top: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(18, 18, 18, 0.95);
-        backdrop-filter: blur(12px);
+        background-color: rgba(18, 18, 18, 0.97);
         align-items: center;
         justify-content: center;
     }
