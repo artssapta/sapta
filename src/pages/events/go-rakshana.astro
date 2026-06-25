@@ -1,0 +1,18 @@
+---
+import { getEntry } from 'astro:content';
+import Layout from '../../components/Layout.astro';
+import Events from '../../components/blocks/Events.astro';
+
+const page = await getEntry('pages', 'go-rakshana');
+const blocks = page?.data?.blocks || [];
+
+const components = {
+  events: Events,
+};
+---
+<Layout title="Go Rakshana | SAPTA">
+    {blocks.map((block) => {
+        const Component = components[block.type];
+        return Component ? <Component {...block} /> : null;
+    })}
+</Layout>

@@ -1,6 +1,6 @@
 ---
 name: Upasana Arun
-role: Team Member
+role: Co-Founder
 photo: "/assets/image_186815.png"
 order: 3
 ---
