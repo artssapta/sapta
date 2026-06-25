@@ -11,7 +11,6 @@ const resolvePath = (path: string) => {
 };
 ---
 <div class="about-section">
-    <h2 class="section-title reveal">{title}</h2>
     <div class={`about-grid ${imageSide === 'left' ? 'image-left' : 'image-right'}`}>
         {imageSide === 'left' && (
             <div class="about-img reveal reveal-left">
@@ -52,7 +51,7 @@ const resolvePath = (path: string) => {
         display: grid;
         grid-template-columns: 1.2fr 1fr;
         gap: 50px;
-        align-items: center;
+        align-items: start;
     }
 
     .about-grid.image-left {
