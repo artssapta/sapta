@@ -2,7 +2,89 @@
 title: Events
 blocks:
   - type: events
-    title: Upcoming Events
-    flyerImage: "/assets/go_rakshana_flyer.jpg"
+    title: SAPTA Events
     color: "#2A7396"
+    events:
+      - id: eka
+        title: Eka
+        subtitle: It All Begins with One
+        date: "March 14, 2026"
+        time: "2 PM - 4 PM"
+        location: "Sri Karpaga Ganapathi Temple, San Ramon, CA"
+        description: "SAPTA's inaugural event — 'Eka' (meaning One) — celebrated the launch of the Student Artists' Platform with student vocal and instrumental Carnatic performances. Proceeds went directly to support the Sri Karpaga Ganapathi Temple."
+        flyerImage: "/assets/eka_flyer.png"
+        gallery:
+          - src: "/assets/folderImages_eka/IMG_0622.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_0625.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_0635.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_0658.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_0688.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_3859.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_3901.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_3913.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_3933.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_4706.jpeg"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_5182.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_5220.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_5229.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_5232.JPG"
+            alt: "Eka Concert Image"
+          - src: "/assets/folderImages_eka/IMG_5233.JPG"
+            alt: "Eka Concert Image"
+        videos:
+          - title: "Eka performance by Student Artists"
+            videoUrl: "https://www.youtube.com/watch?v=F1VUwJJcerk"
+      - id: go-rakshana
+        title: Go-Rakshana
+        subtitle: Where Nada meets Karuna
+        date: "June 13, 2026"
+        time: "3 PM - 5 PM"
+        location: "Sri Karpaga Ganapathi Temple, San Ramon, CA"
+        description: "Proceeds from this event went to support Shri Krishna Brundavan Gokulam (1125 Finley Rd, Pleasanton, CA). The concert featured beautiful Carnatic vocal and instrumental music by student artists, showcasing talent while nurturing our local community."
+        flyerImage: "/assets/go_rakshana_flyer.jpg"
+        gallery:
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263309/IMG_8769_zuqazu.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263309/IMG_7450_t3aua5.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263308/IMG_7445_p86061.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263308/IMG_7447_wujvvc.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263307/IMG_7433_l7osw1.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263306/IMG_5797_w1f1cr.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263306/IMG_7435_t2vxkn.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263306/IMG_5785_pavdbk.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263305/IMG_7424_xvtgcv.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263305/IMG_5761_ipryjw.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263304/IMG_5786_rd3dl3.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263304/IMG_5759_l9zypk.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263304/20260613_154058_a3d1n1.jpg"
+            alt: "Go-Rakshana Event Image"
+          - src: "https://res.cloudinary.com/dkudoatww/image/upload/v1782263303/20260613_154052_sjen2x.jpg"
+            alt: "Go-Rakshana Event Image"
+        videos:
+          - title: "Go-Rakshana performance by Student Artists"
+            videoUrl: "https://www.youtube.com/watch?v=K2RPGrBGUgY"
 ---
