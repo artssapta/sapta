@@ -706,25 +706,7 @@ const isActive = (href: string) => {
                 </div>
             </div>
 
-            <!-- Newsletter -->
-            <div class="footer-col footer-newsletter">
-                <h3>Stay in the Loop</h3>
-                <p style="margin-bottom:12px;">Get notified about upcoming SAPTA events.</p>
-                <form
-                    name="newsletter"
-                    method="POST"
-                    data-netlify="true"
-                    action="/thank-you"
-                    onsubmit="handleNewsletterSubmit(event)"
-                >
-                    <input type="hidden" name="form-name" value="newsletter" />
-                    <input type="email" name="email" placeholder="Your email address" required />
-                    <button type="submit">Subscribe</button>
-                </form>
-                <p id="newsletter-msg" style="margin-top:8px; font-size:9.5pt; color:rgba(73,170,212,0.9); display:none;">
-                    Thanks! We'll keep you posted.
-                </p>
-            </div>
+
         </div>
 
         <div class="footer-bottom">
