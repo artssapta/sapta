@@ -317,10 +317,10 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         }
       };
 
-      document.querySelectorAll('.photo-card img, .flyer-card img').forEach(img => {
+      document.querySelectorAll('.photo-card img, .flyer-card img, .upcoming-flyer-img').forEach(img => {
         img.addEventListener('click', (e) => {
           const panel = e.target.closest('.event-panel');
-          const isFlyer = e.target.closest('.flyer-card');
+          const isFlyer = e.target.closest('.flyer-card') || e.target.classList.contains('upcoming-flyer-img');
           
           if (panel && !isFlyer) {
             currentImages = Array.from(panel.querySelectorAll('.photo-card img'));
@@ -540,6 +540,12 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         border-radius: 16px;
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
         border: 1px solid rgba(0, 0, 0, 0.06);
+        cursor: pointer;
+        transition: transform 0.35s ease, box-shadow 0.35s ease;
+    }
+    .upcoming-flyer-img:hover {
+        transform: scale(1.02);
+        box-shadow: 0 14px 32px rgba(34, 110, 147, 0.18);
     }
     .upcoming-details-box {
         display: flex;
