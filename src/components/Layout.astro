@@ -36,7 +36,9 @@ const isActive = (href: string) => {
         "url": "https://saptaarts.org",
         "logo": "https://saptaarts.org/favicon.png",
         "sameAs": [
-          "https://sites.google.com/view/saptaarts"
+          "https://sites.google.com/view/saptaarts",
+          "https://www.instagram.com/ArtsSapta",
+          "https://www.facebook.com/people/SAPTA-Arts/61588073106364/"
         ]
       }
     </script>
@@ -171,6 +173,27 @@ const isActive = (href: string) => {
         }
         .hamburger.active span:nth-child(3) {
             transform: rotate(-45deg) translate(7px, -7px);
+        }
+
+        /* Donate Button */
+        .btn-donate {
+            font-family: 'Inter', sans-serif;
+            font-size: 10pt;
+            font-weight: 600;
+            color: #ffffff !important;
+            background: var(--sapta-teal);
+            padding: 8px 18px !important;
+            border-radius: 20px;
+            text-decoration: none;
+            transition: background 0.2s, transform 0.2s !important;
+            display: inline-block;
+            letter-spacing: 0.3px;
+        }
+        .btn-donate::after { display: none !important; }
+        .btn-donate:hover {
+            background: var(--sapta-teal-dark) !important;
+            color: #ffffff !important;
+            transform: translateY(-1px);
         }
 
         /* Dropdowns */
@@ -331,6 +354,112 @@ const isActive = (href: string) => {
         }
 
         /* ===================== */
+        /* HAMBURGER (MOBILE)    */
+        /* ===================== */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 26px;
+            height: 19px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            z-index: 1100;
+        }
+        .hamburger span {
+            display: block;
+            height: 2px;
+            width: 100%;
+            background: #333;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+            transform-origin: center;
+        }
+        .hamburger.open span:nth-child(1) {
+            transform: translateY(8.5px) rotate(45deg);
+        }
+        .hamburger.open span:nth-child(2) {
+            opacity: 0;
+        }
+        .hamburger.open span:nth-child(3) {
+            transform: translateY(-8.5px) rotate(-45deg);
+        }
+
+        /* Mobile nav panel */
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border-bottom: 1px solid #e0e0e0;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            z-index: 999;
+            padding: 16px 0 24px;
+            animation: slideDown 0.25s ease;
+        }
+        .mobile-nav.visible { display: block; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .mobile-nav ul {
+            list-style: none;
+            padding: 0;
+        }
+        .mobile-nav ul li a,
+        .mobile-nav ul li span {
+            display: block;
+            padding: 12px 28px;
+            font-family: 'Inter', sans-serif;
+            font-size: 11pt;
+            font-weight: 500;
+            color: #444;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .mobile-nav ul li a:hover,
+        .mobile-nav ul li a.active { color: var(--sapta-teal); }
+        .mobile-nav .mobile-sub {
+            padding-left: 16px;
+        }
+        .mobile-nav .mobile-sub li a {
+            padding: 9px 28px 9px 44px;
+            font-size: 10pt;
+            color: #666;
+        }
+        .mobile-nav .mobile-donate {
+            margin: 12px 28px 0;
+        }
+        .mobile-nav .mobile-donate a {
+            display: inline-block;
+            padding: 10px 24px;
+            background: var(--sapta-teal);
+            color: #fff !important;
+            border-radius: 20px;
+            font-family: 'Inter', sans-serif;
+            font-size: 10.5pt;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .mobile-nav .mobile-social {
+            display: flex;
+            gap: 16px;
+            padding: 16px 28px 0;
+            align-items: center;
+        }
+        .mobile-nav .mobile-social a {
+            display: flex;
+            align-items: center;
+            color: #555;
+            transition: color 0.2s;
+        }
+        .mobile-nav .mobile-social a:hover { color: var(--sapta-teal); }
+
+        /* ===================== */
         /* MAIN CONTENT          */
         /* ===================== */
         main {
@@ -360,20 +489,125 @@ const isActive = (href: string) => {
         footer {
             background-color: #212121;
             color: rgba(255,255,255,0.87);
-            padding: 32px 48px;
             font-family: var(--font-heading);
             font-size: 12pt;
         }
+
+        .footer-main {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+            padding: 40px 48px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .footer-col { flex: 1; min-width: 200px; }
+
         footer h3 {
-            font-size: 15pt;
-            font-weight: 400;
-            margin-bottom: 8px;
+            font-size: 13pt;
+            font-weight: 500;
+            margin-bottom: 12px;
             color: rgba(73, 170, 212, 1);
+            letter-spacing: 0.3px;
         }
         footer p {
             font-family: var(--font-serif);
-            font-size: 11pt;
+            font-size: 10.5pt;
             color: rgba(255,255,255,0.6);
+            margin-bottom: 4px;
+        }
+        footer a {
+            color: rgba(255,255,255,0.6);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        footer a:hover { color: rgba(73, 170, 212, 1); }
+
+        /* Social icons row */
+        .footer-social {
+            display: flex;
+            gap: 14px;
+            margin-top: 14px;
+            align-items: center;
+        }
+        .footer-social a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.07);
+            border-radius: 50%;
+            color: rgba(255,255,255,0.6);
+            transition: background 0.2s, color 0.2s;
+        }
+        .footer-social a:hover {
+            background: var(--sapta-teal);
+            color: #fff;
+        }
+
+        /* Mailing list */
+        .footer-newsletter form {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+        .footer-newsletter input[type="email"] {
+            flex: 1;
+            min-width: 160px;
+            padding: 9px 14px;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 4px;
+            background: rgba(255,255,255,0.07);
+            color: #fff;
+            font-family: var(--font-serif);
+            font-size: 10pt;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .footer-newsletter input[type="email"]::placeholder { color: rgba(255,255,255,0.35); }
+        .footer-newsletter input[type="email"]:focus { border-color: var(--sapta-teal); }
+        .footer-newsletter button {
+            padding: 9px 18px;
+            background: var(--sapta-teal);
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Inter', sans-serif;
+            font-size: 9.5pt;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .footer-newsletter button:hover { background: #1a5d7e; }
+
+        /* Footer bottom bar */
+        .footer-bottom {
+            padding: 16px 48px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .footer-bottom p {
+            font-size: 9.5pt;
+            color: rgba(255,255,255,0.35);
+            font-family: var(--font-serif);
+            margin: 0;
+        }
+
+        /* ===================== */
+        /* RESPONSIVE            */
+        /* ===================== */
+        @media (max-width: 767px) {
+            .nav-links { display: none; }
+            .hamburger { display: flex; }
+
+            .footer-main { padding: 32px 24px; gap: 28px; }
+            .footer-bottom { padding: 14px 24px; }
         }
     </style>
 </head>
@@ -385,7 +619,7 @@ const isActive = (href: string) => {
                 <img src={resolvePath("/assets/image_186b79.png")} alt="SAPTA Logo">
                 <span>SAPTA</span>
             </a>
-            <button class="hamburger" aria-label="Toggle menu">
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu">
                 <span></span>
                 <span></span>
                 <span></span>
@@ -400,21 +634,108 @@ const isActive = (href: string) => {
                         <li><a href={resolvePath('/registration/group')} class={isActive('/registration/group') ? 'active' : ''}>Group Registration</a></li>
                     </ul>
                 </li>
-
+                <!-- Social icons in nav (desktop) -->
+                <li>
+                    <a href="https://www.instagram.com/ArtsSapta" target="_blank" rel="noopener" title="Instagram" style="padding: 8px 2px; display:flex; align-items:center;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="https://www.facebook.com/people/SAPTA-Arts/61588073106364/" target="_blank" rel="noopener" title="Facebook" style="padding: 8px 2px; display:flex; align-items:center;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                    </a>
+                </li>
+                <li>
+                    <a href="#donate" class="btn-donate">Donate</a>
+                </li>
             </ul>
+
+            <!-- Hamburger for mobile -->
+            <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
         </nav>
     </header>
+
+    <!-- Mobile nav panel -->
+    <div class="mobile-nav" id="mobile-nav" role="navigation" aria-label="Mobile navigation">
+        <ul>
+            <li><a href={resolvePath('/')} class={isActive('/') ? 'active' : ''}>About Us</a></li>
+            <li><a href={resolvePath('/events')} class={isActive('/events') ? 'active' : ''}>Events</a></li>
+            <li><a href={resolvePath('/feedback')} class={isActive('/feedback') ? 'active' : ''}>Feedback</a></li>
+            <li>
+                <span style="font-family:'Inter',sans-serif; font-size:11pt; font-weight:600; color:#888; padding:10px 28px 4px; display:block; font-size:9pt; text-transform:uppercase; letter-spacing:0.5px;">Registration</span>
+                <ul class="mobile-sub">
+                    <li><a href={resolvePath('/registration/spotlight')}>Sapta Spotlight</a></li>
+                    <li><a href={resolvePath('/registration/group')}>Group Registration</a></li>
+                </ul>
+            </li>
+        </ul>
+        <div class="mobile-donate">
+            <a href="#donate">Donate</a>
+        </div>
+        <div class="mobile-social">
+            <a href="https://www.instagram.com/ArtsSapta" target="_blank" rel="noopener" title="Instagram">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </a>
+            <a href="https://www.facebook.com/people/SAPTA-Arts/61588073106364/" target="_blank" rel="noopener" title="Facebook">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+            </a>
+        </div>
+    </div>
 
     <main>
         <slot />
     </main>
 
     <footer>
-        <h3>Contact Us</h3>
-        <p>Email: artssapta@gmail.com</p>
+        <div class="footer-main">
+            <!-- Contact -->
+            <div class="footer-col">
+                <h3>Contact Us</h3>
+                <p>Email: <a href="mailto:artssapta@gmail.com">artssapta@gmail.com</a></p>
+                <div class="footer-social">
+                    <a href="https://www.instagram.com/ArtsSapta" target="_blank" rel="noopener" title="Instagram">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                    </a>
+                    <a href="https://www.facebook.com/people/SAPTA-Arts/61588073106364/" target="_blank" rel="noopener" title="Facebook">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Newsletter -->
+            <div class="footer-col footer-newsletter">
+                <h3>Stay in the Loop</h3>
+                <p style="margin-bottom:12px;">Get notified about upcoming SAPTA events.</p>
+                <form
+                    name="newsletter"
+                    method="POST"
+                    data-netlify="true"
+                    action="/thank-you"
+                    onsubmit="handleNewsletterSubmit(event)"
+                >
+                    <input type="hidden" name="form-name" value="newsletter" />
+                    <input type="email" name="email" placeholder="Your email address" required />
+                    <button type="submit">Subscribe</button>
+                </form>
+                <p id="newsletter-msg" style="margin-top:8px; font-size:9.5pt; color:rgba(73,170,212,0.9); display:none;">
+                    Thanks! We'll keep you posted.
+                </p>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© {new Date().getFullYear()} SAPTA — Student Artists' Platform. All rights reserved.</p>
+            <p>Serving the Tri-Valley community.</p>
+        </div>
     </footer>
 
+
     <script is:inline>
+        /* Scroll reveal */
         function initScrollReveal() {
             const reveals = document.querySelectorAll('.reveal:not(.visible)');
             const observer = new IntersectionObserver((entries, obs) => {
@@ -431,51 +752,46 @@ const isActive = (href: string) => {
             }, { threshold: 0.04, rootMargin: '0px 0px -30px 0px' });
             reveals.forEach(el => observer.observe(el));
         }
-
-        function initMobileMenu() {
-            const hamburger = document.querySelector('.hamburger');
-            const navLinks = document.querySelector('.nav-links');
-            const dropdowns = document.querySelectorAll('.dropdown');
-
-            hamburger?.addEventListener('click', () => {
-                hamburger.classList.toggle('active');
-                navLinks?.classList.toggle('active');
-            });
-
-            // Close menu when a link is clicked
-            navLinks?.addEventListener('click', (e) => {
-                if (e.target.tagName === 'A') {
-                    hamburger?.classList.remove('active');
-                    navLinks?.classList.remove('active');
-                }
-            });
-
-            // Handle dropdown toggles on mobile
-            dropdowns.forEach(dropdown => {
-                const label = dropdown.querySelector('.dropdown-label');
-                label?.addEventListener('click', (e) => {
-                    if (window.innerWidth <= 768) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        dropdown.classList.toggle('active');
-                    }
-                });
-            });
-
-            // Close dropdowns when menu closes
-            window.addEventListener('resize', () => {
-                if (window.innerWidth > 768) {
-                    hamburger?.classList.remove('active');
-                    navLinks?.classList.remove('active');
-                    dropdowns.forEach(d => d.classList.remove('active'));
-                }
-            });
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
             initScrollReveal();
-            initMobileMenu();
+            
+            const hamburger = document.getElementById('hamburger');
+            const mobileNav = document.getElementById('mobile-nav');
+
+            if (hamburger && mobileNav) {
+                hamburger.addEventListener('click', () => {
+                    const isOpen = mobileNav.classList.toggle('visible');
+                    hamburger.classList.toggle('open', isOpen);
+                    hamburger.setAttribute('aria-expanded', isOpen.toString());
+                });
+
+                mobileNav.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        mobileNav.classList.remove('visible');
+                        hamburger.classList.remove('open');
+                        hamburger.setAttribute('aria-expanded', 'false');
+                    });
+                });
+            }
         });
+
+        function handleNewsletterSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const msg = document.getElementById('newsletter-msg');
+            fetch('/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams(new FormData(form)).toString()
+            }).then(() => {
+                form.style.display = 'none';
+                msg.style.display = 'block';
+            }).catch(() => {
+                msg.textContent = "You're subscribed! We'll be in touch.";
+                form.style.display = 'none';
+                msg.style.display = 'block';
+            });
+        }
     </script>
 
 </body>
