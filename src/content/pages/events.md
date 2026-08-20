@@ -5,7 +5,17 @@ blocks:
     title: SAPTA Events
     color: "#2A7396"
     events:
+      - id: svasthya
+        status: upcoming
+        title: Svāsthya
+        subtitle: Harmony in Sound, Healing in Purpose
+        date: "August 29, 2026"
+        time: "2 PM - 4 PM"
+        location: "Sri Karpaga Ganapathi Temple, San Ramon, CA"
+        description: "Join us for SAPTA's third event, celebrating the spirit of Svāsthya — well-being, wholeness, and harmony. Experience student performances and SAPTA Spotlights, as we raise funds for Culinary Angels, who deliver healing, nourishing meals to cancer patients and caregivers across our Tri-Valley community."
+        flyerImage: "/assets/svasthya_flyer.png"
       - id: eka
+        status: past
         title: Eka
         subtitle: It All Begins with One
         date: "March 14, 2026"
@@ -48,6 +58,7 @@ blocks:
           - title: "Eka performance by Student Artists"
             videoUrl: "https://www.youtube.com/watch?v=F1VUwJJcerk"
       - id: go-rakshana
+        status: past
         title: Go-Rakshana
         subtitle: Where Nada meets Karuna
         date: "June 13, 2026"
