@@ -25,6 +25,7 @@ const pages = defineCollection({
         color: z.string().optional(),
         events: z.array(z.object({
           id: z.string(),
+          status: z.enum(['upcoming', 'past']).optional(),
           title: z.string(),
           subtitle: z.string().optional(),
           date: z.string(),

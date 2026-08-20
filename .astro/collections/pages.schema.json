@@ -72,17 +72,92 @@
               "title": {
                 "type": "string"
               },
-              "flyerImage": {
-                "type": "string"
-              },
               "color": {
                 "type": "string"
+              },
+              "events": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "upcoming",
+                        "past"
+                      ]
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "subtitle": {
+                      "type": "string"
+                    },
+                    "date": {
+                      "type": "string"
+                    },
+                    "time": {
+                      "type": "string"
+                    },
+                    "location": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "flyerImage": {
+                      "type": "string"
+                    },
+                    "gallery": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "src": {
+                            "type": "string"
+                          },
+                          "alt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "src"
+                        ]
+                      }
+                    },
+                    "videos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string"
+                          },
+                          "videoUrl": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "videoUrl"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "title",
+                    "date",
+                    "flyerImage"
+                  ]
+                }
               }
             },
             "required": [
               "type",
-              "title",
-              "flyerImage"
+              "title"
             ]
           },
           {

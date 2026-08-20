@@ -16,10 +16,14 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
             <div class="events-tabs-nav">
                 {events.map((event, index) => (
                     <button 
-                        class={`event-tab-btn ${index === 0 ? 'active' : ''}`}
+                        class={`event-tab-btn ${event.status === 'upcoming' ? 'upcoming-tab' : 'past-tab'} ${index === 0 ? 'active' : ''}`}
                         data-event-id={event.id}
                     >
-                        {event.title}
+                        {event.status === 'upcoming' && <span class="pulse-dot"></span>}
+                        <span class="tab-title-text">{event.title}</span>
+                        <span class={`tab-badge ${event.status === 'upcoming' ? 'badge-upcoming' : 'badge-past'}`}>
+                            {event.status === 'upcoming' ? 'Upcoming' : 'Past'}
+                        </span>
                     </button>
                 ))}
             </div>
@@ -32,149 +36,224 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                 id={`panel-${event.id}`} 
                 class={`event-panel ${index === 0 ? 'active' : ''}`}
             >
-                <div class="event-main-grid">
-                    {/* Left Column - Flyer & Information */}
-                    <div class="event-info-col">
-                        <div class="details-text-card">
-                            <h2 class="event-title">{event.title}</h2>
-                            {event.subtitle && <p class="event-subtitle">{event.subtitle}</p>}
-                            
-                            <div class="event-metadata">
-                                <div class="meta-item">
-                                    <div class="icon-wrapper">
-                                        <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                                        </svg>
-                                    </div>
-                                    <div class="meta-text">
-                                        <span class="meta-label">Date</span>
-                                        <span class="meta-val">{event.date}</span>
-                                    </div>
-                                </div>
-                                
-                                {event.time && (
-                                    <div class="meta-item">
-                                        <div class="icon-wrapper">
-                                            <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <circle cx="12" cy="12" r="10"></circle>
-                                                <polyline points="12 6 12 12 16 14"></polyline>
-                                            </svg>
-                                        </div>
-                                        <div class="meta-text">
-                                            <span class="meta-label">Time</span>
-                                            <span class="meta-val">{event.time}</span>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {event.location && (
-                                    <div class="meta-item">
-                                        <div class="icon-wrapper">
-                                            <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                                <circle cx="12" cy="10" r="3"></circle>
-                                            </svg>
-                                        </div>
-                                        <div class="meta-text">
-                                            <span class="meta-label">Venue</span>
-                                            <span class="meta-val">{event.location}</span>
-                                        </div>
-                                    </div>
-                                )}
+                {event.status === 'upcoming' ? (
+                    /* ========================================= */
+                    /* UPCOMING EVENT CUSTOM FEATURE LAYOUT       */
+                    /* ========================================= */
+                    <div class="upcoming-event-card">
+                        <div class="upcoming-card-grid">
+                            {/* Left: Flyer Image */}
+                            <div class="upcoming-flyer-box">
+                                <img src={resolvePath(event.flyerImage)} alt={`${event.title} Flyer`} class="upcoming-flyer-img" />
                             </div>
 
-                            {event.description && (
-                                <div class="event-description">
-                                    <p>{event.description}</p>
+                            {/* Right: Details & Description */}
+                            <div class="upcoming-details-box">
+                                <div class="upcoming-badge-row">
+                                    <span class="upcoming-badge-tag">
+                                        <span class="pulse-dot"></span> Upcoming Event
+                                    </span>
                                 </div>
-                            )}
-                        </div>
+                                <h2 class="upcoming-event-name">{event.title}</h2>
+                                {event.subtitle && <p class="upcoming-event-subtitle">{event.subtitle}</p>}
 
-                        <div class="flyer-card">
-                            <div class="flyer-card-inner">
-                                <img src={resolvePath(event.flyerImage)} alt={`${event.title} Flyer`} />
+                                <div class="event-metadata">
+                                    <div class="meta-item">
+                                        <div class="icon-wrapper">
+                                            <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                                            </svg>
+                                        </div>
+                                        <div class="meta-text">
+                                            <span class="meta-label">Date</span>
+                                            <span class="meta-val">{event.date}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    {event.time && (
+                                        <div class="meta-item">
+                                            <div class="icon-wrapper">
+                                                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                                </svg>
+                                            </div>
+                                            <div class="meta-text">
+                                                <span class="meta-label">Time</span>
+                                                <span class="meta-val">{event.time}</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {event.location && (
+                                        <div class="meta-item">
+                                            <div class="icon-wrapper">
+                                                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                                    <circle cx="12" cy="10" r="3"></circle>
+                                                </svg>
+                                            </div>
+                                            <div class="meta-text">
+                                                <span class="meta-label">Venue</span>
+                                                <span class="meta-val">{event.location}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {event.description && (
+                                    <div class="event-description upcoming-desc">
+                                        <p>{event.description}</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
+                ) : (
+                    /* ========================================= */
+                    /* PAST EVENT ARCHIVE LAYOUT                 */
+                    /* ========================================= */
+                    <div class="event-main-grid">
+                        {/* Left Column - Flyer & Information */}
+                        <div class="event-info-col">
+                            <div class="details-text-card">
+                                <div class="title-status-row">
+                                    <h3 class="event-title">{event.title}</h3>
+                                    <span class="status-pill past">Past Event</span>
+                                </div>
+                                {event.subtitle && <p class="event-subtitle">{event.subtitle}</p>}
+                                
+                                <div class="event-metadata">
+                                    <div class="meta-item">
+                                        <div class="icon-wrapper">
+                                            <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                                            </svg>
+                                        </div>
+                                        <div class="meta-text">
+                                            <span class="meta-label">Date</span>
+                                            <span class="meta-val">{event.date}</span>
+                                        </div>
+                                    </div>
+                                    
+                                    {event.time && (
+                                        <div class="meta-item">
+                                            <div class="icon-wrapper">
+                                                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                                </svg>
+                                            </div>
+                                            <div class="meta-text">
+                                                <span class="meta-label">Time</span>
+                                                <span class="meta-val">{event.time}</span>
+                                            </div>
+                                        </div>
+                                    )}
 
-                    {/* Right Column - Media (Videos & Photos) */}
-                    <div class="event-media-col">
-                        {/* Videos */}
-                        {event.videos && event.videos.length > 0 ? (
-                            <div class="event-videos-section">
-                                <h3 class="media-title">Relive the Moment</h3>
-                                <div class="videos-grid">
-                                    {event.videos.map((vid) => {
-                                        const isLocal = vid.videoUrl.endsWith('.mp4') || vid.videoUrl.endsWith('.MP4') || vid.videoUrl.startsWith('/assets/');
-                                        if (isLocal) {
+                                    {event.location && (
+                                        <div class="meta-item">
+                                            <div class="icon-wrapper">
+                                                <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                                    <circle cx="12" cy="10" r="3"></circle>
+                                                </svg>
+                                            </div>
+                                            <div class="meta-text">
+                                                <span class="meta-label">Venue</span>
+                                                <span class="meta-val">{event.location}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {event.description && (
+                                    <div class="event-description">
+                                        <p>{event.description}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div class="flyer-card">
+                                <div class="flyer-card-inner">
+                                    <img src={resolvePath(event.flyerImage)} alt={`${event.title} Flyer`} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Right Column - Media (Videos & Photos) */}
+                        <div class="event-media-col">
+                            {/* Videos */}
+                            {event.videos && event.videos.length > 0 && (
+                                <div class="event-videos-section">
+                                    <h3 class="media-title">Relive the Moment</h3>
+                                    <div class="videos-grid">
+                                        {event.videos.map((vid) => {
+                                            const isLocal = vid.videoUrl.endsWith('.mp4') || vid.videoUrl.endsWith('.MP4') || vid.videoUrl.startsWith('/assets/');
+                                            if (isLocal) {
+                                                return (
+                                                    <div class="video-card">
+                                                        <div class="video-wrapper">
+                                                            <video controls preload="metadata" class="local-video">
+                                                                <source src={resolvePath(vid.videoUrl)} type="video/mp4" />
+                                                                Your browser does not support the video tag.
+                                                            </video>
+                                                        </div>
+                                                        {vid.title && <p class="video-caption">{vid.title}</p>}
+                                                    </div>
+                                                );
+                                            }
+
+                                            const videoId = vid.videoUrl.includes('v=') 
+                                                ? vid.videoUrl.split('v=')[1].split('&')[0] 
+                                                : vid.videoUrl.split('/').pop();
                                             return (
                                                 <div class="video-card">
-                                                    <div class="video-wrapper">
-                                                        <video controls preload="metadata" class="local-video">
-                                                            <source src={resolvePath(vid.videoUrl)} type="video/mp4" />
-                                                            Your browser does not support the video tag.
-                                                        </video>
+                                                    <div class="iframe-wrapper">
+                                                        <iframe 
+                                                            src={`https://www.youtube.com/embed/${videoId}`} 
+                                                            title={vid.title || "YouTube video player"} 
+                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                                            allowfullscreen>
+                                                        </iframe>
                                                     </div>
                                                     {vid.title && <p class="video-caption">{vid.title}</p>}
                                                 </div>
                                             );
-                                        }
-
-                                        const videoId = vid.videoUrl.includes('v=') 
-                                            ? vid.videoUrl.split('v=')[1].split('&')[0] 
-                                            : vid.videoUrl.split('/').pop();
-                                        return (
-                                            <div class="video-card">
-                                                <div class="iframe-wrapper">
-                                                    <iframe 
-                                                        src={`https://www.youtube.com/embed/${videoId}`} 
-                                                        title={vid.title || "YouTube video player"} 
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                                                        allowfullscreen>
-                                                    </iframe>
-                                                </div>
-                                                {vid.title && <p class="video-caption">{vid.title}</p>}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        ) : (
-                            <div class="event-videos-section placeholder-videos">
-                                <h3 class="media-title">Relive the Moment</h3>
-                                <div class="videos-grid">
-                                    <div class="video-card">
-                                        <div class="iframe-wrapper"></div>
+                                        })}
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {/* Gallery */}
-                        {event.gallery && event.gallery.length > 0 && (
-                            <div class="event-gallery-section">
-                                <h3 class="media-title">Event Gallery</h3>
-                                <div class="photo-grid-scroll">
-                                    <div class="photo-grid">
-                                        {event.gallery.map((img) => (
-                                            <div class="photo-card">
-                                                <div class="photo-card-inner">
-                                                    <img 
-                                                        src={resolvePath(img.src)} 
-                                                        alt={img.alt || "Event gallery photo"} 
-                                                    />
+                            {/* Gallery */}
+                            {event.gallery && event.gallery.length > 0 && (
+                                <div class="event-gallery-section">
+                                    <h3 class="media-title">Event Gallery</h3>
+                                    <div class="photo-grid-scroll">
+                                        <div class="photo-grid">
+                                            {event.gallery.map((img) => (
+                                                <div class="photo-card">
+                                                    <div class="photo-card-inner">
+                                                        <img 
+                                                            src={resolvePath(img.src)} 
+                                                            alt={img.alt || "Event gallery photo"} 
+                                                        />
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         ))}
     </div>
@@ -238,10 +317,10 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         }
       };
 
-      document.querySelectorAll('.photo-card img, .flyer-card img').forEach(img => {
+      document.querySelectorAll('.photo-card img, .flyer-card img, .upcoming-flyer-img').forEach(img => {
         img.addEventListener('click', (e) => {
           const panel = e.target.closest('.event-panel');
-          const isFlyer = e.target.closest('.flyer-card');
+          const isFlyer = e.target.closest('.flyer-card') || e.target.classList.contains('upcoming-flyer-img');
           
           if (panel && !isFlyer) {
             currentImages = Array.from(panel.querySelectorAll('.photo-card img'));
@@ -327,13 +406,197 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         letter-spacing: 0.5px;
     }
 
-    /* Tabs Navigation */
+    /* Navigation & Tabs */
     .events-nav-container {
         display: flex;
         justify-content: center;
         margin-top: 40px;
         margin-bottom: 20px;
         padding: 0 20px;
+    }
+    .events-tabs-nav {
+        background: #ffffff;
+        padding: 6px;
+        border-radius: 30px;
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 10px 30px -10px rgba(34, 110, 147, 0.12);
+    }
+    .event-tab-btn {
+        font-family: 'Inter', sans-serif;
+        font-size: 10.5pt;
+        font-weight: 500;
+        color: #555555;
+        background: transparent;
+        border: none;
+        padding: 10px 22px;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .event-tab-btn:hover {
+        color: #226E93;
+        background: rgba(34, 110, 147, 0.06);
+    }
+    .event-tab-btn.active {
+        color: white;
+        background: linear-gradient(135deg, #226E93 0%, #1e6c93 100%);
+        box-shadow: 0 8px 16px -6px rgba(34, 110, 147, 0.4);
+    }
+    .tab-badge {
+        font-size: 7.5pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        padding: 3px 8px;
+        border-radius: 10px;
+    }
+    .badge-upcoming {
+        background: rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+    }
+    .event-tab-btn:not(.active) .badge-upcoming {
+        background: rgba(34, 110, 147, 0.15);
+        color: #226E93;
+    }
+    .badge-past {
+        background: rgba(0, 0, 0, 0.06);
+        color: #777777;
+    }
+    .event-tab-btn.active .badge-past {
+        background: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+    }
+
+    .upcoming-badge-row {
+        margin-bottom: 12px;
+    }
+    .upcoming-badge-tag {
+        font-family: 'Inter', sans-serif;
+        font-size: 8.5pt;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        background: rgba(34, 110, 147, 0.12);
+        color: #226E93;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #226E93;
+        border-radius: 50%;
+        display: inline-block;
+        animation: pulseAnimation 2s infinite ease-in-out;
+    }
+    .event-tab-btn.active .pulse-dot {
+        background-color: #ffffff;
+    }
+    @keyframes pulseAnimation {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 110, 147, 0.7); }
+        70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(34, 110, 147, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 110, 147, 0); }
+    }
+    .section-title-text {
+        font-family: 'Lora', serif;
+        font-size: 26px;
+        font-weight: 500;
+        color: #226E93;
+        margin: 0;
+    }
+
+    .upcoming-event-card {
+        background: #ffffff;
+        border-radius: 24px;
+        padding: 40px;
+        border: 1px solid rgba(34, 110, 147, 0.2);
+        box-shadow: 0 20px 45px -10px rgba(34, 110, 147, 0.12);
+    }
+    .upcoming-card-grid {
+        display: grid;
+        grid-template-columns: 0.9fr 1.1fr;
+        gap: 48px;
+        align-items: center;
+    }
+    .upcoming-flyer-box {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    .upcoming-flyer-img {
+        width: 100%;
+        max-height: 540px;
+        object-fit: contain;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        cursor: pointer;
+        transition: transform 0.35s ease, box-shadow 0.35s ease;
+    }
+    .upcoming-flyer-img:hover {
+        transform: scale(1.02);
+        box-shadow: 0 14px 32px rgba(34, 110, 147, 0.18);
+    }
+    .upcoming-details-box {
+        display: flex;
+        flex-direction: column;
+    }
+    .upcoming-event-name {
+        font-family: 'Lora', serif;
+        font-size: 38px;
+        font-weight: 500;
+        color: #226E93;
+        margin-bottom: 6px;
+        line-height: 1.2;
+    }
+    .upcoming-event-subtitle {
+        font-family: 'Lora', serif;
+        font-size: 20px;
+        font-style: italic;
+        color: #555555;
+        margin-bottom: 28px;
+    }
+    .upcoming-desc {
+        margin-top: 10px;
+        font-size: 13.5pt;
+        line-height: 1.8;
+        color: #3c3c3c;
+    }
+
+    /* ========================================= */
+    /* PAST EVENTS ARCHIVE STYLING               */
+    /* ========================================= */
+    .past-section-wrapper {
+        margin-top: 50px;
+        padding-top: 30px;
+        border-top: 2px dashed rgba(0, 0, 0, 0.08);
+    }
+    .past-section-header {
+        text-align: center;
+        margin-bottom: 36px;
+    }
+    .past-section-title {
+        font-family: 'Lora', serif;
+        font-size: 32px;
+        font-weight: 500;
+        color: #226E93;
+        margin-bottom: 6px;
+    }
+    .past-section-sub {
+        font-family: 'Inter', sans-serif;
+        font-size: 11pt;
+        color: #666666;
+        margin-bottom: 24px;
     }
     .events-tabs-nav {
         background: #ffffff;
@@ -364,13 +627,6 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         color: white;
         background: linear-gradient(135deg, #226E93 0%, #1e6c93 100%);
         box-shadow: 0 8px 16px -6px rgba(34, 110, 147, 0.4);
-    }
-
-    /* Event Panels */
-    .container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px 24px;
     }
     .event-panel {
         display: none;
