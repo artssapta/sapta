@@ -1060,15 +1060,73 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         .photo-card img {
             height: 125px;
         }
+        
+        /* Upcoming Event Card Responsive */
+        .upcoming-card-grid {
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+        .upcoming-event-card {
+            padding: 30px 24px;
+        }
+        .upcoming-flyer-img {
+            max-height: 440px;
+            width: auto;
+        }
+        .upcoming-event-name {
+            font-size: 28px;
+            text-align: center;
+        }
+        .upcoming-event-subtitle {
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .upcoming-badge-row {
+            display: flex;
+            justify-content: center;
+        }
+        .upcoming-details-box .event-metadata {
+            justify-content: center;
+        }
     }
 
     @media (max-width: 600px) {
         .container {
-            padding: 15px 16px;
+            padding: 15px 16px 40px;
+        }
+        .events-nav-container {
+            padding: 0 16px;
+            margin-top: 24px;
+        }
+        .events-tabs-nav {
+            border-radius: 20px;
+            padding: 4px;
+            width: 100%;
+            justify-content: center;
         }
         .event-tab-btn {
-            padding: 8px 20px;
-            font-size: 10pt;
+            padding: 8px 16px;
+            font-size: 9.5pt;
+            flex: 1;
+            justify-content: center;
+            text-align: center;
+        }
+        .tab-badge {
+            display: none; /* Hide badge text on extremely small screens to save space */
+        }
+        .upcoming-flyer-img {
+            max-height: 360px;
+        }
+        .upcoming-event-name {
+            font-size: 24px;
+        }
+        .upcoming-event-subtitle {
+            font-size: 15px;
+        }
+        .upcoming-desc {
+            font-size: 11.5pt;
+            line-height: 1.7;
         }
         .details-text-card {
             padding: 24px;
@@ -1083,6 +1141,18 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
             top: 15px;
             right: 20px;
             font-size: 30px;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .upcoming-flyer-img {
+            max-height: 280px;
+        }
+        .upcoming-event-card {
+            padding: 20px 16px;
+        }
+        .upcoming-event-name {
+            font-size: 22px;
         }
     }
 </style>
