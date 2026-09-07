@@ -1,5 +1,5 @@
 ---
-const { title, subtitle, color = "#226E93", showDonate = false } = Astro.props;
+const { title, subtitle, color = "#316fa6", showDonate = false } = Astro.props;
 const resolvePath = (p) => p && p.startsWith('/') ? `${import.meta.env.BASE_URL.replace(/\/$/, '')}${p}` : p;
 const bgImage = resolvePath("/assets/hero_music_banner.png");
 ---
@@ -11,7 +11,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         {showDonate && (
             <div class="hero-cta">
                 <a href="#donate" class="btn-hero-donate">Support Our Mission</a>
-                <a href="/events" class="btn-hero-events">View Events</a>
+        <a href={resolvePath('/events')} class="btn-hero-events">View Events</a>
             </div>
         )}
     </div>
@@ -20,7 +20,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
 <style>
     .hero {
         position: relative;
-        height: 380px;
+        min-height: 470px;
         background-size: cover;
         background-position: center;
         display: flex;
@@ -28,7 +28,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         align-items: center;
         text-align: center;
         color: white;
-        margin-bottom: 40px;
+        margin-bottom: 0;
         overflow: hidden;
     }
 
@@ -39,8 +39,8 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         background:
             linear-gradient(
                 to bottom,
-                rgba(22, 70, 95, 0.45) 0%,
-                rgba(15, 50, 70, 0.72) 100%
+                rgba(22, 70, 75, 0.38) 0%,
+                rgba(15, 50, 55, 0.82) 100%
             );
         z-index: 1;
     }
@@ -63,7 +63,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         position: relative;
         z-index: 2;
         padding: 60px 48px;
-        max-width: 900px;
+        max-width: 980px;
     }
 
     /* Override reveal animation inside hero — always visible */
@@ -82,8 +82,8 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
 
     .hero h1 {
         font-family: 'Lora', serif;
-        font-size: 64pt;
-        font-weight: 400;
+        font-size: clamp(48pt, 8vw, 78pt);
+        font-weight: 500;
         line-height: 1;
         letter-spacing: -1px;
         margin-top: 40px;
@@ -94,11 +94,11 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
 
     .hero-subtitle {
         font-family: 'Lora', serif;
-        font-size: 25pt;
+        font-size: clamp(17pt, 3vw, 28pt);
         font-weight: 400;
         line-height: 1.1;
         margin-top: 20px;
-        color: rgba(255,255,255,0.92);
+        color: rgba(255,255,255,0.94);
         text-shadow: 0 1px 8px rgba(0,0,0,0.25);
     }
 
@@ -113,8 +113,8 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     .btn-hero-donate {
         display: inline-block;
         padding: 13px 28px;
-        background: #ffffff;
-        color: #226E93;
+        background: #f1cf3b;
+        color: #1d4770;
         font-family: 'Inter', sans-serif;
         font-size: 10.5pt;
         font-weight: 700;
@@ -125,7 +125,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         box-shadow: 0 4px 14px rgba(0,0,0,0.18);
     }
     .btn-hero-donate:hover {
-        background: #f0f8ff;
+        background: #fff0a8;
         transform: translateY(-2px);
         box-shadow: 0 8px 22px rgba(0,0,0,0.22);
     }
@@ -150,9 +150,9 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     }
 
     @media (max-width: 767px) {
-        .hero { height: 300px; }
+        .hero { min-height: 380px; }
         .hero h1 { font-size: 38pt; }
-        .hero-subtitle { font-size: 17pt; }
+        .hero-subtitle { font-size: 17pt; max-width: 30rem; margin-left: auto; margin-right: auto; }
         .hero-content { padding: 40px 24px; }
         .btn-hero-donate, .btn-hero-events { padding: 11px 22px; font-size: 10pt; }
     }

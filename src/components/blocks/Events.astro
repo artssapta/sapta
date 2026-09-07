@@ -1,5 +1,5 @@
 ---
-const { title, events = [], color = "#2A7396" } = Astro.props;
+const { title, events = [], color = "#316fa6" } = Astro.props;
 const resolvePath = (p) => p && p.startsWith('/') ? `${import.meta.env.BASE_URL.replace(/\/$/, '')}${p}` : p;
 const bgImage = resolvePath("/assets/hero_music_banner.png");
 ---
