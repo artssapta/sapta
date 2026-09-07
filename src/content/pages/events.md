@@ -6,7 +6,7 @@ blocks:
     color: "#2A7396"
     events:
       - id: svasthya
-        status: upcoming
+        status: past
         title: Svāsthya
         subtitle: Harmony in Sound, Healing in Purpose
         date: "August 29, 2026"
