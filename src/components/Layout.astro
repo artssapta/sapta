@@ -2,9 +2,11 @@
 interface Props {
   title?: string;
   description?: string;
+  noindex?: boolean;
 }
 
 const {
+  noindex = false,
   title = "SAPTA | Student Artists' Platform",
   description = "SAPTA is a non-profit, student-led organization that promotes Carnatic music. While providing students of all levels opportunities to perform, they also have a way to showcase their talents in unique ways.",
 } = Astro.props;
@@ -26,6 +28,7 @@ const isActive = (href: string) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title}</title>
     <meta name="description" content={description}>
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="icon" type="image/png" href={resolvePath("/favicon.png")} />
     <link rel="apple-touch-icon" sizes="180x180" href={resolvePath("/favicon.png")} />
     <script type="application/ld+json" is:inline>
@@ -238,13 +241,17 @@ const isActive = (href: string) => {
             background: #f5f5f5;
             color: #316fa6;
         }
-        .dropdown:hover .dropdown-menu {
+        .dropdown:hover .dropdown-menu,
+        .dropdown:focus-within .dropdown-menu {
             display: block;
         }
 
         /* Mobile-specific dropdown behavior */
         .dropdown-label {
             user-select: none;
+            appearance: none;
+            border: 0;
+            background: transparent;
         }
         .dropdown.active .dropdown-menu {
             display: block;
@@ -782,11 +789,12 @@ const isActive = (href: string) => {
             </a>
             <ul class="nav-links">
                 <li><a href={resolvePath('/')} class={isActive('/') ? 'active' : ''}>About Us</a></li>
-                <li><a href={resolvePath('/events')} class={isActive('/events') ? 'active' : ''}>Events</a></li>
+                <li><a href={resolvePath('/events/')} class={isActive('/events') ? 'active' : ''}>Events</a></li>
                 <li><a href={resolvePath('/feedback')} class={isActive('/feedback') ? 'active' : ''}>Feedback</a></li>
                 <li class="dropdown">
-                    <span class={`dropdown-label ${isActive('/registration') ? 'active' : ''}`}>Registration</span>
-                    <ul class="dropdown-menu">
+                    <button type="button" id="registration-toggle" aria-expanded="false" aria-controls="registration-menu" class={`dropdown-label ${isActive('/registration') ? 'active' : ''}`}>Registration</button>
+                    <ul class="dropdown-menu" id="registration-menu">
+                        <li><a href={resolvePath('/registration/spotlight')} class={isActive('/registration/spotlight') ? 'active' : ''}>SAPTA Spotlight</a></li>
                         <li><a href={resolvePath('/registration/group')} class={isActive('/registration/group') ? 'active' : ''}>Group Registration</a></li>
                     </ul>
                 </li>
@@ -817,7 +825,7 @@ const isActive = (href: string) => {
     <div class="mobile-nav" id="mobile-nav" role="navigation" aria-label="Mobile navigation">
         <ul>
             <li><a href={resolvePath('/')} class={isActive('/') ? 'active' : ''}>About Us</a></li>
-            <li><a href={resolvePath('/events')} class={isActive('/events') ? 'active' : ''}>Events</a></li>
+            <li><a href={resolvePath('/events/')} class={isActive('/events') ? 'active' : ''}>Events</a></li>
             <li><a href={resolvePath('/feedback')} class={isActive('/feedback') ? 'active' : ''}>Feedback</a></li>
             <li>
                 <span style="font-family:'Inter',sans-serif; font-size:11pt; font-weight:600; color:#888; padding:10px 28px 4px; display:block; font-size:9pt; text-transform:uppercase; letter-spacing:0.5px;">Registration</span>
@@ -866,6 +874,7 @@ const isActive = (href: string) => {
         <div class="footer-bottom">
             <p>© {new Date().getFullYear()} SAPTA — Student Artists' Platform. All rights reserved.</p>
             <p>Serving the Tri-Valley community.</p>
+            <p><a href={resolvePath('/admin/')}>Team editor</a></p>
         </div>
     </footer>
 
@@ -917,6 +926,11 @@ const isActive = (href: string) => {
         }
         document.addEventListener('DOMContentLoaded', () => {
             initScrollReveal();
+            const registrationToggle = document.getElementById('registration-toggle');
+            registrationToggle?.addEventListener('click', () => {
+                const expanded = registrationToggle.parentElement.classList.toggle('active');
+                registrationToggle.setAttribute('aria-expanded', String(expanded));
+            });
             
             const hamburger = document.getElementById('hamburger');
             const mobileNav = document.getElementById('mobile-nav');

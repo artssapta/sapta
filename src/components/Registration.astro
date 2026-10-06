@@ -1,0 +1,38 @@
+---
+import { registrationLink } from '../lib/media.mjs';
+const { title, status, message, url } = Astro.props;
+const link = registrationLink(url);
+const isOpen = status === 'open' && link;
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<section class="registration" aria-labelledby="registration-title">
+  <p class="eyebrow">Perform with SAPTA</p>
+  <h1 id="registration-title">{title}</h1>
+  <div class="notice">
+    <p class="status">{isOpen ? 'Registration is open' : 'Coming soon'}</p>
+    <p class="message">{message}</p>
+    {isOpen
+      ? <a class="action" href={link} target="_blank" rel="noopener noreferrer">Open registration form <span aria-hidden="true">↗</span></a>
+      : <p class="note">The new registration link will appear on this page when it’s ready.</p>}
+    {isOpen && <p class="note">The form opens in a new tab.</p>}
+  </div>
+  <div class="links">
+    <a href={`${base}/events/`}>Explore our events <span aria-hidden="true">→</span></a>
+    <a href="mailto:artssapta@gmail.com">Contact us</a>
+  </div>
+</section>
+<style>
+  .registration { max-width: 800px; margin: 0 auto; padding: 88px 24px 100px; }
+  .eyebrow { font: 600 12px 'Inter', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #526874; margin-bottom: 18px; }
+  h1 { font: 400 clamp(32px, 5vw, 52px)/1.15 'Lora', serif; color: #1d4770; margin-bottom: 38px; }
+  .notice { border-top: 3px solid #e4bd32; border-bottom: 1px solid #d8dedc; padding: 32px 0; }
+  .status { font: 500 26px 'Lora', serif; color: #1d4770; margin-bottom: 14px; }
+  .message { font-size: 21px; line-height: 1.65; max-width: 600px; }
+  .note { font: 400 14px/1.6 'Inter', sans-serif; color: #58676c; margin-top: 22px; }
+  .action { display: inline-flex; gap: 24px; margin-top: 26px; padding: 14px 22px; border-radius: 6px; background: #245681; color: white; font: 500 15px 'Inter', sans-serif; text-decoration: none; }
+  .action:hover { background: #1d4770; }
+  .links { display: flex; flex-wrap: wrap; gap: 28px; margin-top: 28px; }
+  .links a { color: #245681; font: 500 14px 'Inter', sans-serif; text-underline-offset: 5px; }
+  a:focus-visible { outline: 3px solid #316fa6; outline-offset: 5px; }
+  @media (max-width: 600px) { .registration { padding-top: 52px; } }
+</style>

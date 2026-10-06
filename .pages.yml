@@ -1,0 +1,215 @@
+media:
+  - name: photos
+    label: Event photos and flyers
+    input: public/uploads/photos
+    output: /uploads/photos
+    extensions:
+      - jpg
+      - jpeg
+      - png
+      - webp
+      - avif
+    rename: random
+  - name: videos
+    label: Short event videos
+    input: public/uploads/videos
+    output: /uploads/videos
+    extensions:
+      - mp4
+      - webm
+    rename: random
+content:
+  - name: events
+    label: Events, photos & videos
+    type: collection
+    path: src/content/events
+    format: yaml-frontmatter
+    subfolders: false
+    filename: "{primary}.md"
+    view:
+      primary: title
+      fields:
+        - title
+        - date
+        - status
+      sort: order
+      order: asc
+    fields:
+      - name: title
+        label: Event name
+        type: string
+        required: true
+      - name: order
+        label: Display order
+        type: number
+        required: true
+        default: 99
+        description: Smaller numbers appear first in the event tabs.
+        options:
+          min: 1
+      - name: status
+        label: Event status
+        type: select
+        required: true
+        default: upcoming
+        options:
+          values:
+            - name: upcoming
+              label: Upcoming
+            - name: past
+              label: Past event
+      - name: date
+        label: Date
+        type: string
+        required: true
+        description: "For example: August 29, 2026"
+      - name: time
+        label: Time
+        type: string
+      - name: location
+        label: Venue
+        type: string
+      - name: subtitle
+        label: Subtitle
+        type: string
+      - name: description
+        label: About this event
+        type: text
+      - name: flyerImage
+        label: Event flyer
+        type: image
+        required: true
+        options:
+          media: photos
+      - name: gallery
+        label: Event gallery — add photos here
+        type: object
+        description: Add a photo, upload or select its image, and write a short description. Save the event
+          to put it in this event’s gallery. Drag entries to reorder them.
+        list:
+          collapsible:
+            collapsed: true
+            summary: "{fields.alt}"
+        fields:
+          - name: src
+            label: Photo
+            type: image
+            required: true
+            options:
+              media: photos
+          - name: alt
+            label: Photo description
+            type: string
+            description: Describe the performers or moment shown. Also used by screen readers.
+      - name: videos
+        label: Event videos — add performances here
+        type: object
+        description: Save videos here to place them in this event’s video section. Use YouTube for full
+          concerts; uploads are for short clips.
+        list:
+          collapsible:
+            collapsed: true
+            summary: "{fields.title}"
+        fields:
+          - name: title
+            label: Video title
+            type: string
+            required: true
+          - name: source
+            label: How to add the video
+            type: select
+            default: youtube
+            required: true
+            options:
+              values:
+                - name: youtube
+                  label: YouTube link
+                - name: upload
+                  label: Upload a short video
+          - name: videoUrl
+            label: YouTube link
+            type: string
+            description: Used when YouTube link is selected above. Paste a watch, share, or Shorts link.
+            pattern:
+              regex: ^https://(www\.|m\.)?(youtube\.com|youtu\.be)/[^\s]+$
+              message: Paste a complete https:// YouTube or youtu.be link.
+          - name: file
+            label: Video upload
+            type: file
+            description: Used when Upload a short video is selected above. Choose MP4 (H.264) or WebM. Large
+              recordings should use YouTube.
+            options:
+              media: videos
+              extensions:
+                - mp4
+                - webm
+  - name: group-registration
+    label: Group registration
+    type: file
+    path: src/content/registrations/group.md
+    format: yaml-frontmatter
+    fields:
+      - name: title
+        label: Page title
+        type: string
+        required: true
+      - name: status
+        label: Registration availability
+        type: select
+        required: true
+        default: coming-soon
+        description: Keep Coming soon selected until the new form is ready. Choose Open and save to show the
+          form button.
+        options:
+          values:
+            - name: coming-soon
+              label: Coming soon
+            - name: open
+              label: Open
+      - name: message
+        label: Message for visitors
+        type: text
+        required: true
+        description: This appears underneath the status. Update it when registration opens.
+      - name: url
+        label: Registration form link
+        type: string
+        description: Paste the new https:// form link. It stays hidden while registration is Coming soon.
+        pattern:
+          regex: ^https://[^\s]+$
+          message: Use a complete link beginning with https://.
+  - name: spotlight-registration
+    label: SAPTA Spotlight registration
+    type: file
+    path: src/content/registrations/spotlight.md
+    format: yaml-frontmatter
+    fields:
+      - name: title
+        label: Page title
+        type: string
+        required: true
+      - name: status
+        label: Registration availability
+        type: select
+        required: true
+        default: coming-soon
+        description: Keep Coming soon selected until the new form is ready. Choose Open and save to show the
+          form button.
+        options:
+          values:
+            - name: coming-soon
+              label: Coming soon
+            - name: open
+              label: Open
+      - name: message
+        label: Message for visitors
+        type: text
+        required: true
+        description: This appears underneath the status. Update it when registration opens.
+      - name: url
+        label: Registration form link
+        type: string
+        description: Paste the new https:// form link. It stays hidden while registration is Coming soon.
+        pattern:
+          regex: ^https://[^\s]+$
+          message: Use a complete link beginning with https://.

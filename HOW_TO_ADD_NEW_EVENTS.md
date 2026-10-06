@@ -1,68 +1,62 @@
-# Guide: How to Add New Events and Photos (No Coding Required)
+# SAPTA team editor
 
-This guide shows you how to add new events or update photos/videos on the website. You **do not** need any coding experience! You only need to edit one text file.
+Once activated, open `/admin/` on the SAPTA website and choose **Sign in to the content editor**. The editor is Pages CMS. Team members invited by email can edit content without learning Git or editing website files.
 
-The events file is located at: `src/content/pages/events.md`
+## Photos
 
----
+1. Open **Events, photos & videos** in the editor.
+2. Select the event, such as **Eka** or **Go-Rakshana**.
+3. Under **Event gallery**, add a photo entry and upload an image. Add a short description of the people or moment shown.
+4. Drag entries into the desired order and save the event.
 
-## 📋 The Main Steps
+Saving adds the photo to that event's existing gallery and lightbox after the automatic website deployment finishes. Uploading a file to the media library alone does not attach it to an event: select it in the event's gallery field and save.
 
-1. **Upload your photos to Cloudinary** (e.g. `https://cloudinary.com`).
-2. **Copy the image links** from Cloudinary.
-3. **Open the events file** (`events.md`) in your editor.
-4. **Copy and paste the template** (below) at the top of the `events:` list.
+## Videos
 
----
+In the selected event, add an entry under **Event videos**, enter a title, and choose a source:
 
-## 📝 The Event Template (Copy & Paste)
+- **YouTube link:** paste a YouTube watch, share, Shorts or live link. Use this for full concerts.
+- **Upload a short video:** choose an MP4 encoded with H.264 or a WebM file. Keep clips small; the editor and GitHub impose upload limits, and GitHub Pages has a 1 GB site limit. This site does not transcode videos.
 
-Copy this block of text, paste it under the `events:` line in `src/content/pages/events.md`, and replace the text inside the quotes with your event details:
+Only the selected source is used, even if both fields contain values. Save the event to place the video in its existing video section. Uploaded media works for both upcoming and past events.
 
-```yaml
-      - id: unique-event-name                # A unique ID for this event (use lowercase and hyphens, no spaces. e.g. "summer-concert")
-        title: "Name of Event"               # The main title displayed on the site
-        subtitle: "A Catchy Subtitle"        # Optional: A short subtitle/slogan. If none, delete this line.
-        date: "June 25, 2026"                # The date of the event
-        time: "3 PM - 5 PM"                  # Optional: Time of the event. If none, delete this line.
-        location: "Location Name, City, CA"  # Optional: Location of the event. If none, delete this line.
-        description: "Write your event description here. You can write as many sentences as you want."
-        flyerImage: "/assets/flyer_name.jpg" # The image path for the event flyer.
-        gallery:                             # The list of photo links from Cloudinary
-          - src: "https://res.cloudinary.com/.../photo1.jpg"
-            alt: "Caption describing photo 1"  # This is the caption/description for the photo
-          - src: "https://res.cloudinary.com/.../photo2.jpg"
-            alt: "Caption describing photo 2"
-        videos:                              # Optional: YouTube links for performances
-          - title: "Performance Title"
-            videoUrl: "https://www.youtube.com/watch?v=..."
-```
+## Registration
 
----
+1. Choose **Group registration** or **SAPTA Spotlight registration**.
+2. Paste the new HTTPS form link into **Registration form link**.
+3. Update **Message for visitors**.
+4. Set **Registration availability** to **Open**, then save.
 
-## 💡 Quick Tips for Beginners
+Choose **Coming soon** to hide the form link again. Both pages currently start in Coming soon mode with the previous links removed. Open forms use a clearly labeled button that opens the form in a new tab, including shortened Google Forms links.
 
-### 1. Formatting & Spacing (Crucial!)
-YAML files (like `events.md`) are very sensitive to spacing.
-* **Never use the Tab key** to align lines. Always use the Spacebar.
-* Make sure your new event starts with `- id:` and aligns exactly with the other events in the file.
-* Keep the quotes (`""`) around your text fields.
+## New events
 
-### 2. How to Add Captions/Descriptions to Photos
-In the gallery list, each photo has an `alt:` line:
-```yaml
-          - src: "https://res.cloudinary.com/.../photo1.jpg"
-            alt: "Group photo of all performing student artists"
-```
-The text you type inside the quotes after `alt:` serves as the description and accessibility caption for that specific photo.
+Choose **New** in the Events collection. Fill in the name, date, status, flyer and display order. Lower display-order numbers appear first. Add any photos or videos, then save. Keep event status and date up to date manually.
 
-### 3. How to Order Your Events
-The website displays events in the exact order they are listed in the file.
-* If you want a new event to show up **first**, paste its block at the very top of the list (right under the `events:` line).
-* If you want it to show up **second**, paste it below the first event block.
+## Publishing
 
-### 4. Handling Missing Info
-If you don't have something, you don't need to leave empty placeholder lines. You can just delete them or leave them empty:
-* No videos? Write: `videos: []`
-* No photos? Write: `gallery: []`
-* No subtitle? Simply delete the `subtitle:` line entirely.
+Save changes on the **main** branch to update the live website. The existing GitHub Actions deployment runs automatically; changes are not instant. Allow a few minutes and refresh the website. Saves on another branch do not publish to the live site. If an update does not appear, ask the website owner to inspect the latest deployment; invalid links or missing required fields can stop a build while the last good site stays online.
+
+## One-time activation — website owner
+
+The local implementation is prepared, but online editing is not active until these steps are completed:
+
+1. Publish the updated source files and `.pages.yml` to the `artssapta/sapta` repository on `main`. Keep the migrated `src/content/events` and `src/content/registrations` files with the matching page code.
+2. Open https://app.pagescms.org and sign in with the GitHub account that administers the repository.
+3. Install/connect the Pages CMS GitHub App with access to **only `artssapta/sapta`**. This grants the service permission to save content and uploaded files to that repository.
+4. Select `artssapta/sapta`, then `main`. The editor reads `.pages.yml` automatically.
+5. Invite the intended staff through Pages CMS's collaborator settings. Do not share the owner's GitHub credentials.
+6. Save a small photo to a selected event and confirm that the deployment succeeds and the image appears in that event's gallery. Switch a registration to Open with a valid form link and confirm the button opens the correct form; switch it back to Coming soon if registration is not ready.
+
+`/admin/` is a public sign-in and instructions page, not a public write API. Editing requires authentication in Pages CMS. No passwords or access tokens are embedded in the website. The CMS handles authentication and file writes; GitHub Pages serves the rebuilt site.
+
+## Maintainer notes
+
+- Each event now lives in `src/content/events/<name>.md`; `src/content/pages/events.md` controls the page heading only.
+- Registration settings live in `src/content/registrations/group.md` and `spotlight.md`.
+- Uploaded files are stored in `public/uploads/photos` and `public/uploads/videos`. The CMS writes their public `/uploads/...` paths into the selected event.
+- Existing photo URLs, galleries, titles and event order were preserved during migration.
+- `.pages.yml` defines the editing forms. Astro's content schemas validate saved content before publishing.
+- Roll back an unwanted edit with the repository's history and republish. Removing a gallery entry removes it from that event, but does not delete a file that other entries may still use.
+
+References: [Pages CMS setup](https://pagescms.org/docs/quick-start/), [collaborator access](https://pagescms.org/docs/configuration/collaborators/), [GitHub Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits).

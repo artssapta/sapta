@@ -1,5 +1,46 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { videoSource, registrationLink } from './lib/media.mjs';
+
+const optionalText = z.string().nullish().transform(value => value ?? '');
+const eventSchema = z.object({
+  title: z.string().min(1),
+  order: z.number().int().min(1).default(99),
+  status: z.enum(['upcoming', 'past']).default('past'),
+  subtitle: optionalText,
+  date: z.string().min(1),
+  time: optionalText,
+  location: optionalText,
+  description: optionalText,
+  flyerImage: z.string().min(1),
+  gallery: z.array(z.object({ src: z.string().min(1), alt: optionalText })).nullish().transform(value => value ?? []),
+  videos: z.array(z.object({
+    title: optionalText,
+    source: z.enum(['youtube', 'upload']).default('youtube'),
+    file: optionalText,
+    videoUrl: optionalText,
+  }).refine(video => videoSource(video.source === 'upload' ? video.file : video.videoUrl)?.kind === (video.source === 'upload' ? 'file' : 'youtube'), {
+    message: 'Add a valid YouTube URL, or choose Upload and select an MP4 or WebM file.',
+  })).nullish().transform(value => value ?? []),
+});
+
+const events = defineCollection({
+  loader: glob({ pattern: '*.md', base: 'src/content/events' }),
+  schema: eventSchema,
+});
+
+const registrations = defineCollection({
+  loader: glob({ pattern: '*.md', base: 'src/content/registrations' }),
+  schema: z.object({
+    title: z.string().min(1),
+    status: z.enum(['coming-soon', 'open']).default('coming-soon'),
+    message: z.string().min(1),
+    url: optionalText,
+  }).refine(value => value.status !== 'open' || !!registrationLink(value.url), {
+    message: 'An open registration must have a valid HTTPS form link.',
+    path: ['url'],
+  }),
+});
 
 const pages = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "src/content/pages" }),
@@ -11,6 +52,7 @@ const pages = defineCollection({
         title: z.string(),
         subtitle: z.string().optional(),
         color: z.string().optional(),
+        showDonate: z.boolean().optional(),
       }),
       z.object({
         type: z.literal('about'),
@@ -85,4 +127,4 @@ const team = defineCollection({
   }),
 });
 
-export const collections = { team, pages };
+export const collections = { team, pages, events, registrations };

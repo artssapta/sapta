@@ -1,0 +1,74 @@
+---
+import Layout from '../../components/Layout.astro';
+import { getCollection } from 'astro:content';
+const events = (await getCollection('events')).sort((a, b) => a.data.order - b.data.order);
+const registrations = await getCollection('registrations');
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<Layout title="Team editor | SAPTA" noindex={true}>
+  <div class="admin">
+    <p class="eyebrow">SAPTA · Team editor</p>
+    <h1>Keep the community up to date.</h1>
+    <p class="intro">Add event photos, share performances, and open registrations from one editor. Your updates appear in the existing website layouts after publishing finishes.</p>
+    <a class="signin" href="https://app.pagescms.org" target="_blank" rel="noopener noreferrer">Sign in to the content editor <span aria-hidden="true">↗</span></a>
+    <p class="signin-note">Opens Pages CMS in a new tab. Choose the SAPTA website after signing in.</p>
+
+    <section aria-labelledby="event-heading">
+      <div class="section-heading"><h2 id="event-heading">Photos & videos</h2><a href={`${base}/events/`}>View events →</a></div>
+      <p>In the editor, open <strong>Events, photos & videos</strong> and select the event you want to update.</p>
+      <ul class="event-list">
+        {events.map(event => <li><span><strong>{event.data.title}</strong><small>{event.data.date}</small></span><span class="count">{event.data.gallery.length} {event.data.gallery.length === 1 ? 'photo' : 'photos'} · {event.data.videos.length} {event.data.videos.length === 1 ? 'video' : 'videos'}</span></li>)}
+      </ul>
+      <ol>
+        <li><strong>Choose the event.</strong> This tells the website where the uploads belong.</li>
+        <li><strong>Add photos or videos.</strong> Use the Event gallery or Event videos fields. Add captions and drag entries into the order you want.</li>
+        <li><strong>Save.</strong> The website rebuilds automatically. Allow a few minutes, then refresh the event page.</li>
+      </ol>
+      <p class="note">Upload JPG, PNG, WebP or AVIF photos and short MP4/WebM clips. For a full concert, paste its YouTube link into the video field.</p>
+    </section>
+
+    <section aria-labelledby="registration-heading">
+      <div class="section-heading"><h2 id="registration-heading">Registration links</h2></div>
+      <p>Choose <strong>Group registration</strong> or <strong>SAPTA Spotlight registration</strong> in the editor.</p>
+      <ul class="event-list">
+        {registrations.map(page => <li><a href={`${base}/registration/${page.id}/`}>{page.data.title}</a><span class="availability">{page.data.status === 'open' ? 'Open' : 'Coming soon'}</span></li>)}
+      </ul>
+      <p>Paste the new form link, update the message for visitors, change availability to <strong>Open</strong>, and save. Switch back to <strong>Coming soon</strong> whenever you want to hide the link.</p>
+    </section>
+
+    <details>
+      <summary>First-time setup for the website owner</summary>
+      <p>The website owner connects Pages CMS to the SAPTA repository once. After that, invite the team through the editor’s collaborator settings.</p>
+      <p>If the editor cannot find this configuration, the updated website files and CMS configuration need to be published first.</p>
+      <a href="https://pagescms.org/docs/quick-start/" target="_blank" rel="noopener noreferrer">Open the setup guide ↗</a>
+    </details>
+  </div>
+</Layout>
+<style>
+  .admin { max-width: 980px; margin: 0 auto; padding: 64px 28px 96px; }
+  .eyebrow { font: 600 12px 'Inter', sans-serif; letter-spacing: .12em; text-transform: uppercase; color: #526874; margin-bottom: 20px; }
+  h1 { font: 400 clamp(32px, 5vw, 48px)/1.2 'Lora', serif; color: #1d4770; max-width: 680px; }
+  .intro { font-size: 21px; max-width: 700px; margin: 20px 0 26px; }
+  .signin { display: inline-flex; gap: 30px; background: #245681; color: white; padding: 15px 22px; border-radius: 6px; text-decoration: none; font: 500 15px 'Inter', sans-serif; }
+  .signin:hover { background: #1d4770; }
+  .signin-note, .note { font: 400 13px/1.7 'Inter', sans-serif; color: #58676c; margin-top: 12px; }
+  section { margin-top: 52px; border-top: 1px solid #ced7d8; padding-top: 28px; }
+  .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  h2 { font: 400 28px 'Lora', serif; color: #1d4770; }
+  section p { font-size: 18px; }
+  a { color: #245681; text-underline-offset: 4px; }
+  a:focus-visible, summary:focus-visible { outline: 3px solid #316fa6; outline-offset: 4px; }
+  .section-heading a { font: 500 13px 'Inter', sans-serif; }
+  .event-list { list-style: none; margin: 22px 0; padding: 0; }
+  .event-list li { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 17px 0; border-bottom: 1px solid #e1e4de; }
+  .event-list strong { display: block; font: 500 19px 'Lora', serif; }
+  small { display: block; margin-top: 6px; color: #58676c; font: 400 12px 'Inter', sans-serif; }
+  .count, .availability { font: 500 12px 'Inter', sans-serif; color: #526874; white-space: nowrap; }
+  .availability { padding: 7px 10px; background: #edeade; border-radius: 3px; }
+  ol { padding-left: 22px; font-size: 18px; }
+  ol li { padding: 5px 0 5px 6px; }
+  details { margin-top: 50px; font: 400 14px/1.75 'Inter', sans-serif; }
+  summary { cursor: pointer; font-weight: 600; color: #245681; }
+  details p { margin: 12px 0; }
+  @media (max-width: 600px) { .admin { padding: 42px 22px 70px; } .event-list li { flex-wrap: wrap; gap: 10px; } }
+</style>
