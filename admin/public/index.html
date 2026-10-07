@@ -464,6 +464,10 @@
     .drafts-summary { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
     .drafts-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
     .drafts-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; }
+    .publish-status { margin: 0; font-size: 14px; font-weight: 600; }
+    .publish-status.is-pending { color: #92400e; }
+    .publish-status.is-live { color: var(--success); }
+    .publish-status.is-slow { color: var(--danger); }
     .drafts-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .change-tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; padding: 2px 6px; border-radius: 4px; background: #fef3c7; color: #92400e; margin-right: 6px; }
     .draft-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #fef3c7; color: #92400e; margin-left: 6px; }
@@ -548,8 +552,10 @@
           <span id="drafts-preview-state" class="help-text"></span>
         </div>
         <ul id="drafts-list" class="drafts-list"></ul>
+        <p id="publish-status" class="publish-status" style="display:none;" aria-live="polite"></p>
         <div class="drafts-actions">
-          <a id="drafts-preview" class="btn btn-secondary btn-sm" target="_blank" rel="noopener noreferrer" style="display:none;">Preview website ↗</a>
+          <button class="btn btn-secondary btn-sm" id="drafts-instant" data-action="previewAllDrafts">Preview events page ↗</button>
+          <a id="drafts-preview" class="btn btn-link btn-sm" target="_blank" rel="noopener noreferrer" style="display:none;">Full preview site ↗</a>
           <button class="btn btn-primary btn-sm" id="drafts-publish" data-action="publishDrafts">Publish to website</button>
           <button class="btn btn-danger btn-sm" id="drafts-discard" data-action="discardAllDrafts">Discard all</button>
         </div>
@@ -742,6 +748,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-action="closeEventModal">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-action="previewEvent" title="See this event on the real website page, without saving">Preview</button>
         <button type="submit" form="event-form" class="btn btn-primary" id="save-event-btn">Save Event</button>
       </div>
     </div>

@@ -580,10 +580,8 @@ async function uploadVideoFiles(input) {
   showToast(ok === files.length ? `${ok} clip(s) uploaded. Click “Save Event” to publish them.` : `${ok} of ${files.length} uploaded. Retry or remove the failed rows.`);
 }
 
-async function saveEvent() {
-  if (state.uploadsInFlight > 0) return alert('Please wait for the uploads to finish before saving.');
-  if (document.querySelector('#modal-event .is-failed')) return alert('Some uploads failed. Retry them or remove those rows before saving.');
-
+/** The event exactly as it would be saved (also used for the instant preview). */
+function collectEventForm() {
   const value = id => document.getElementById(id).value.trim();
   const gallery = [...document.querySelectorAll('#gallery-list .gallery-editor-item')]
     .map(row => ({ src: row.querySelector('.gal-src').value.trim(), alt: row.querySelector('.gal-alt').value.trim() }))
@@ -593,31 +591,64 @@ async function saveEvent() {
     const val = row.querySelector('.vid-val').value.trim();
     return { title: row.querySelector('.vid-title').value.trim(), source, ...(source === 'upload' ? { file: val } : { videoUrl: val }) };
   }).filter(v => v.file || v.videoUrl);
+  return {
+    isNew: state.isNewEvent,
+    version: state.editingVersion,
+    slug: value('ev-slug') || slugify(value('ev-title')),
+    title: value('ev-title'),
+    order: parseInt(value('ev-order'), 10),
+    status: value('ev-status'),
+    date: value('ev-date'),
+    time: value('ev-time'),
+    location: value('ev-location'),
+    subtitle: value('ev-subtitle'),
+    description: value('ev-desc'),
+    flyerImage: value('ev-flyer'),
+    gallery,
+    videos,
+  };
+}
 
+/**
+ * Opens the real website page with this content in a new tab, in about a
+ * second: no saving and no build. Posted as a form so the preview opens as
+ * its own isolated page.
+ */
+function openInstantPreview(path, field, payload) {
+  const form = el('form', { method: 'POST', action: path, target: '_blank', style: 'display:none' }, [
+    el('input', { type: 'hidden', name: 'csrf', value: state.csrfToken || '' }),
+    el('input', { type: 'hidden', name: field, value: JSON.stringify(payload) }),
+  ]);
+  document.body.append(form);
+  form.submit();
+  form.remove();
+}
+
+function previewEvent() {
+  if (state.uploadsInFlight > 0) showToast('Uploads still running are not in the preview yet.');
+  openInstantPreview('/preview/events', 'event', collectEventForm());
+}
+
+function previewRegistration(_arg, button) {
+  const fields = button.closest('form').elements;
+  openInstantPreview(`/preview/registration/${encodeURIComponent(button.dataset.id)}`, 'registration', {
+    status: fields.namedItem('status').value,
+    message: fields.namedItem('message').value.trim(),
+    url: fields.namedItem('url').value.trim(),
+  });
+}
+
+async function saveEvent() {
+  if (state.uploadsInFlight > 0) return alert('Please wait for the uploads to finish before saving.');
+  if (document.querySelector('#modal-event .is-failed')) return alert('Some uploads failed. Retry them or remove those rows before saving.');
+
+  const event = collectEventForm();
   const button = document.getElementById('save-event-btn');
   button.disabled = true;
   try {
-    const data = await api('/api/events', {
-      method: 'POST',
-      json: {
-        isNew: state.isNewEvent,
-        version: state.editingVersion,
-        slug: value('ev-slug'),
-        title: value('ev-title'),
-        order: parseInt(value('ev-order'), 10),
-        status: value('ev-status'),
-        date: value('ev-date'),
-        time: value('ev-time'),
-        location: value('ev-location'),
-        subtitle: value('ev-subtitle'),
-        description: value('ev-desc'),
-        flyerImage: value('ev-flyer'),
-        gallery,
-        videos,
-      },
-    });
+    await api('/api/events', { method: 'POST', json: event });
     showToast(savedMessage('Event'));
-    discardFreshUploads(new Set([value('ev-flyer'), ...gallery.map(g => g.src), ...videos.map(v => v.file).filter(Boolean)]));
+    discardFreshUploads(new Set([event.flyerImage, ...event.gallery.map(g => g.src), ...event.videos.map(v => v.file).filter(Boolean)]));
     state.mediaStale = true;
     closeEventModal(true);
     loadEvents();
@@ -965,17 +996,19 @@ async function loadDrafts() {
     ${c.kind === 'other' ? '' : `<button type="button" class="btn btn-secondary btn-sm" data-action="discardDraft" data-arg="${esc(`${c.kind}:${c.id}`)}">Discard</button>`}</li>`).join('');
   if (data.problem) document.getElementById('drafts-list').insertAdjacentHTML('afterbegin', `<li style="color:var(--danger);">${esc(data.problem)}</li>`);
 
+  // "Preview events page" is instant; the full preview site is a complete
+  // build of the drafts that takes about half a minute to update.
+  document.getElementById('drafts-instant').style.display = count ? '' : 'none';
   const preview = document.getElementById('drafts-preview');
   const stateText = document.getElementById('drafts-preview-state');
   if (data.preview.url) {
     preview.href = `${data.preview.url}/events/`;
     preview.style.display = count ? '' : 'none';
-    stateText.textContent = !count ? '' : data.preview.state === 'ready'
-      ? '✓ Preview is up to date.'
-      : data.preview.state === 'building' ? '⏳ Preview is updating (about 1–2 minutes)…' : '';
+    preview.textContent = data.preview.state === 'ready' ? 'Full preview site ✓ ↗' : 'Full preview site (updating…) ↗';
+    stateText.textContent = '';
   } else {
     preview.style.display = 'none';
-    stateText.textContent = count ? 'Preview site not set up yet (see README → "Preview").' : '';
+    stateText.textContent = '';
   }
   document.getElementById('drafts-publish').style.display = count ? '' : 'none';
   document.getElementById('drafts-discard').style.display = count ? '' : 'none';
@@ -990,7 +1023,8 @@ async function publishDrafts() {
   button.disabled = true;
   try {
     const data = await api('/api/drafts/publish', { method: 'POST', json: { head: state.draftHead } });
-    showToast(data.published ? 'Published! The website will update in about 2–3 minutes.' : 'Nothing to publish.');
+    if (data.published && data.commit) watchLiveSite(data.commit);
+    else showToast('Nothing to publish.');
   } catch (err) {
     alert(err.message);
   } finally {
@@ -1024,6 +1058,34 @@ async function discardAllDrafts() {
   }
   await Promise.all([loadEvents(), loadRegistrations()]);
   loadDrafts();
+}
+
+let liveTimer = null;
+
+/** Shows "Publishing…" until the live site serves the published commit. */
+function watchLiveSite(commit, startedAt = Date.now()) {
+  clearTimeout(liveTimer);
+  const status = document.getElementById('publish-status');
+  status.style.display = '';
+  status.className = 'publish-status is-pending';
+  const elapsed = () => Math.round((Date.now() - startedAt) / 1000);
+  status.textContent = `⏳ Publishing to saptaarts.org… ${elapsed()}s (usually 1–2 minutes)`;
+  liveTimer = setTimeout(async () => {
+    let data = {};
+    try { data = await api(`/api/live-status?commit=${commit}`); } catch {}
+    if (data.live) {
+      status.className = 'publish-status is-live';
+      status.replaceChildren('✓ Live on saptaarts.org after ', `${elapsed()}s. `,
+        el('a', { href: `${state.siteUrl || 'https://saptaarts.org'}/events/`, target: '_blank', rel: 'noopener noreferrer', textContent: 'View the website ↗' }));
+      return;
+    }
+    if (Date.now() - startedAt > 10 * 60 * 1000) {
+      status.className = 'publish-status is-slow';
+      status.textContent = 'Publishing is taking longer than usual. Check the "Deploy to GitHub Pages" run on GitHub (Actions tab).';
+      return;
+    }
+    watchLiveSite(commit, startedAt);
+  }, 8000);
 }
 
 /** Message after saving, depending on whether saves publish directly. */
@@ -1063,7 +1125,10 @@ async function loadRegistrations() {
           <label>Form Link (HTTPS)</label>
           <input type="url" name="url" value="${esc(reg.url)}" placeholder="https://forms.gle/...">
         </div>
-        <button type="submit" class="btn btn-primary btn-sm">Save Registration</button>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-secondary btn-sm" data-action="previewRegistration" data-id="${esc(reg.id)}">Preview</button>
+          <button type="submit" class="btn btn-primary btn-sm">Save Registration</button>
+        </div>
       </form>
     </div>`).join('');
 }
@@ -1118,6 +1183,7 @@ const clickActions = {
   logout, switchTab, openNewEventModal, selectMediaFolder, closeEventModal, openMediaPicker, addEmptyGalleryRow,
   addVideoRow: () => addVideoRow(), closeMediaPicker, selectPickerFolder, editEvent, deleteEvent, copyUrl,
   publishDrafts, discardDraft, discardAllDrafts, createFolder, renameFolder, deleteFolder,
+  previewEvent, previewRegistration, previewAllDrafts: () => window.open('/preview/events', '_blank', 'noopener'),
   selectPickerImage, moveRowUp, moveRowDown, removeRow, retryUpload, deleteMedia,
   pickFile: id => document.getElementById(id)?.click(),
 };

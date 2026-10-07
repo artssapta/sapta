@@ -15,6 +15,7 @@ import {
   eventPath, registrationPath, ValidationError, SLUG_RE, REGISTRATION_IDS, EVENTS_DIR, REGISTRATIONS_DIR,
 } from './content.mjs';
 import { StoreError } from './stores/errors.mjs';
+import { renderEventsSection, renderRegistrationSection } from './render-preview.mjs';
 
 const MB = 1024 * 1024;
 const STATIC = { '/': '/index.html', '/admin.js': '/admin.js', '/shared/cloudinary-url.mjs': '/shared/cloudinary-url.mjs' };
@@ -106,9 +107,22 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
     return { email: payload.sub, csrf: payload.csrf };
   }
 
-  function requireUser(request) {
+  function requireUser(request, { formToken } = {}) {
     const user = currentUser(request);
     if (!user) throw new HttpError(401, 'Your session has ended. Please log in again.');
+    // Form posts (instant preview) carry the CSRF token as a field instead of a header.
+    if (formToken !== undefined) {
+      // Browsers send "Origin: null" for form posts from pages with
+      // Referrer-Policy: no-referrer (like this admin). Accept that only when
+      // the browser also says the request came from this site; the per-session
+      // token in the form is the main protection either way.
+      const origin = request.headers.get('origin');
+      const site = request.headers.get('sec-fetch-site');
+      if (site && site !== 'same-origin') throw new HttpError(403, 'Cross-site request blocked.');
+      if (origin && origin !== 'null' && origin !== config.origin && !(!config.secure && allowedHosts.has(safeHost(origin)))) throw new HttpError(403, 'Cross-site request blocked.');
+      if (!safeEqual(formToken, user.csrf)) throw new HttpError(403, 'Security token missing or outdated. Reload the admin page.');
+      return user;
+    }
     if (!['GET', 'HEAD'].includes(request.method)) {
       // Same-origin check plus a per-session token in a custom header; a
       // cross-site page can send neither.
@@ -313,6 +327,96 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
     return results;
   }
 
+  // ---------- instant previews ----------
+
+  // The live site provides the page around the preview (header, footer, CSS,
+  // scripts); only the events / registration section is replaced.
+  const templateOrigin = config.siteUrl || 'https://saptaarts.org';
+  const templateCache = new Map(); // path → { at, html }
+
+  async function sitePage(path) {
+    const cached = templateCache.get(path);
+    if (cached && Date.now() - cached.at < 5 * 60_000) return cached.html;
+    const response = await fetchImpl(`${templateOrigin}${path}`, { signal: AbortSignal.timeout(10_000) });
+    if (!response.ok) throw new HttpError(502, `Could not load ${templateOrigin}${path} for the preview (HTTP ${response.status}).`);
+    const html = await response.text();
+    templateCache.set(path, { at: Date.now(), html });
+    return html;
+  }
+
+  /** Swaps the section with class `sectionClass` for `render(oldSection)` and marks the page as a preview. */
+  async function previewPage(path, sectionClass, render) {
+    const html = await sitePage(path);
+    const start = html.indexOf(`<section class="${sectionClass}"`);
+    if (start < 0) throw new HttpError(502, 'The website layout changed; the preview cannot find the section to replace.');
+    const end = html.indexOf('</section>', start) + '</section>'.length;
+    const old = html.slice(start, end);
+    const fresh = render({ cid: old.match(/data-astro-cid-[a-z0-9]+/)?.[0], old });
+    const banner = '<div role="status" style="position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2147483647;'
+      + 'background:#92400e;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:10px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.25)">'
+      + 'PREVIEW — unpublished changes. This is not the live website.</div>';
+    return (html.slice(0, start) + fresh + html.slice(end))
+      .replace(/<head[^>]*>/i, m => `${m}<base href="${templateOrigin}/">`)
+      .replace(/<\/body>/i, `${banner}</body>`);
+  }
+
+  function previewResponse(html, status = 200) {
+    const headers = secureHeaders(new Headers({
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'X-Robots-Tag': 'noindex, nofollow',
+      // Runs the site's own scripts (tabs, lightbox) in an isolated sandbox
+      // with no access to the admin's login.
+      'Content-Security-Policy': "sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox; frame-ancestors 'none'",
+    }));
+    return new Response(html, { status, headers });
+  }
+
+  const previewError = (message, status = 400) => previewResponse(
+    `<!doctype html><meta charset="utf-8"><title>Preview</title><body style="font:16px system-ui;padding:40px;max-width:640px;margin:auto">`
+    + `<h1 style="font-size:20px">The preview could not be shown</h1><p>${message.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))}</p></body>`, status);
+
+  async function readForm(request) {
+    const text = await request.text();
+    if (text.length > MB) throw new HttpError(413, 'Request is too large.');
+    return new URLSearchParams(text);
+  }
+
+  async function routePreview(request, url) {
+    const isPost = request.method === 'POST';
+    if (!['GET', 'POST'].includes(request.method)) throw new HttpError(405, 'Method not allowed.');
+    const form = isPost ? await readForm(request) : null;
+    requireUser(request, isPost ? { formToken: form.get('csrf') || '' } : {});
+
+    if (url.pathname === '/preview/events') {
+      // Saved drafts, optionally with one unsaved event from the editor on top.
+      const events = (await listEvents()).filter(ev => !ev.error).map(({ slug, version, ...ev }) => ({ ...ev, id: slug }));
+      if (isPost) {
+        const { slug, data } = validateEvent(JSON.parse(form.get('event') || '{}'), { cloudName: config.cloudinary.cloudName || '-' });
+        const draft = { subtitle: '', time: '', location: '', description: '', gallery: [], videos: [], ...data, id: slug };
+        const index = events.findIndex(ev => ev.id === slug);
+        if (index >= 0) events[index] = draft; else events.push(draft);
+      }
+      return previewResponse(await previewPage('/events/', 'events-section', ({ cid, old }) => renderEventsSection(events, {
+        cid,
+        title: old.match(/<h1[^>]*>([^<]*)<\/h1>/)?.[1]?.replace(/&#39;/g, "'").replace(/&amp;/g, '&') || 'Events',
+        color: old.match(/background-color: ([^;"]+);/)?.[1] || '#316fa6',
+      })));
+    }
+
+    const reg = url.pathname.match(/^\/preview\/registration\/([a-z]+)$/);
+    if (reg) {
+      const id = reg[1];
+      registrationPath(id); // validates the id
+      const files = await store.list(REGISTRATIONS_DIR);
+      const file = files.find(f => f.name === `${id}.md`);
+      let data = file ? registrationFromFile(id, file.text) : { title: id, status: 'coming-soon', message: '', url: '' };
+      if (isPost) data = { ...data, ...validateRegistration(id, JSON.parse(form.get('registration') || '{}')) };
+      return previewResponse(await previewPage(`/registration/${id}/`, 'registration', ({ cid }) => renderRegistrationSection(data, { cid })));
+    }
+    throw new HttpError(404, 'Not found.');
+  }
+
   // ---------- routes ----------
 
   async function route(request) {
@@ -353,6 +457,16 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
     if (pathname === '/auth/logout' && request.method === 'POST') {
       requireUser(request);
       return json(200, { ok: true }, [sessionCookie('', 0)]);
+    }
+
+    if (pathname.startsWith('/preview/')) {
+      try {
+        return await routePreview(request, url);
+      } catch (err) {
+        if (err instanceof HttpError || err instanceof ValidationError || err instanceof StoreError) return previewError(err.message, err.status);
+        if (err instanceof SyntaxError) return previewError('The editor sent an unreadable preview request. Reload the admin page.');
+        throw err;
+      }
     }
 
     if (!pathname.startsWith('/api/')) throw new HttpError(404, 'Not found.');
@@ -435,6 +549,20 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       });
       console.log(`[drafts] ${user.email} published: ${summary}`);
       return json(200, { ok: true, ...result });
+    }
+
+    // Has a publish reached the live website yet? Compares the commit in the
+    // live site's build-info.json with the published commit.
+    if (pathname === '/api/live-status' && request.method === 'GET') {
+      const commit = String(url.searchParams.get('commit') || '');
+      if (!/^[0-9a-f]{7,40}$/.test(commit)) throw new HttpError(400, 'Invalid commit.');
+      try {
+        const response = await fetchImpl(`${templateOrigin}/build-info.json?t=${Date.now()}`, { signal: AbortSignal.timeout(8000) });
+        const info = response.ok ? await response.json() : {};
+        return json(200, { live: typeof info.commit === 'string' && info.commit.startsWith(commit), liveCommit: info.commit || null, builtAt: info.builtAt || null });
+      } catch {
+        return json(200, { live: false, liveCommit: null, unknown: true });
+      }
     }
 
     if (pathname === '/api/drafts/discard' && request.method === 'POST') {

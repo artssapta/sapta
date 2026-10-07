@@ -49,8 +49,11 @@ SAPTA admin — Cloudflare Worker (admin/worker.mjs)
 2. **Add New Event** → type the title (the identifier, e.g. `navaratri-utsav-2026`, is filled in and also names the event's Cloudinary folder).
 3. **Upload Photos** — select all photos at once. They are placed in file-name order (`IMG_2` before `IMG_10`; phones name photos in the order taken), uploaded three at a time, and each row shows progress. Failed rows have **Retry**; ✕ on a photo you just uploaded also deletes it from Cloudinary. Use ↑ / ↓ to reorder.
 4. **Upload Flyer**, and **Upload Clips** for short videos (MOV is converted to MP4). Use **YouTube Link** for full concerts.
-5. **Save Event** — this saves a **draft**. Nothing changes on the website yet.
-6. The yellow bar lists every unpublished change. **Preview website** opens a copy of the site that includes your drafts (it updates about 1–2 minutes after each save). **Discard** throws one draft away; **Publish to website** makes all of them live (about 2–3 minutes).
+5. **Preview** (next to Save) opens the real Events page with your edits in about a second — even before saving. Registrations have a Preview button too.
+6. **Save Event** — this saves a **draft**. Nothing changes on the website yet.
+7. The yellow bar lists every unpublished change. **Preview events page** shows all saved drafts instantly; **Full preview site** is a complete build of the drafts (ready about 30–40 seconds after a save). **Discard** throws one draft away; **Publish to website** makes all of them live and shows "Publishing…" until saptaarts.org actually serves the new version (usually 1–2 minutes), then "✓ Live".
+
+Instant previews use the live site's page with the events/registration section re-rendered by `admin/core/render-preview.mjs`, a copy of the Astro components' markup. `tests/preview-parity.test.mjs` builds the site and fails if the two differ, so a change to `Events.astro` or `Registration.astro` must be mirrored there. Embedded YouTube players may stay black in the instant preview (it runs in a security sandbox); they work on the full preview site.
 
 If someone else saved the same event after you opened it, your save is stopped (nothing is overwritten): reload and make the change again.
 

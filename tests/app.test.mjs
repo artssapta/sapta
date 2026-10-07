@@ -32,6 +32,12 @@ async function setup(t, envOverrides = {}) {
       return new Response(JSON.stringify({ id_token: idToken }));
     }
     const u = String(url);
+    if (u.startsWith('https://saptaarts.org/build-info.json')) return new Response('{"commit":"0000000"}');
+    if (u === 'https://saptaarts.org/events/') {
+      return new Response('<html><head><title>Events</title></head><body><nav>menu</nav><section class="events-section" data-astro-cid-abc>'
+        + '<div class="events-hero" style="background-image: url(/assets/hero_music_banner.png); background-color: #2A7396;" data-astro-cid-abc>'
+        + '<h1 data-astro-cid-abc>SAPTA Events</h1></div></section><script>/* tabs */</script></body></html>');
+    }
     // Fake Cloudinary folders + moves.
     if (u.includes('/folders/')) {
       const pathname = new URL(u).pathname;
@@ -289,4 +295,48 @@ test('folders: create, rename, delete (empty only), move files, upload into them
   const signed = await (await post('/api/uploads/sign', { kind: 'photo', folder: 'Rehearsals', filename: 'a.jpg', size: 10 })).json();
   assert.equal(signed.fields.folder, 'sapta/folders/Rehearsals');
   assert.equal((await post('/api/uploads/sign', { kind: 'photo', folder: '../events/x' })).status, 400);
+});
+
+test('instant preview: real page around the drafts, unsaved edits included, sandboxed', async t => {
+  const s = await setup(t);
+  assert.equal((await s.call('/preview/events')).status, 401, 'requires login');
+  const { authed, cookie, me } = await s.login();
+
+  const saved = await authed('/preview/events');
+  const html = await saved.text();
+  assert.equal(saved.status, 200);
+  assert.match(saved.headers.get('content-security-policy'), /^sandbox allow-scripts/);
+  assert.match(html, /<base href="https:\/\/saptaarts\.org\/">/);
+  assert.match(html, /<nav>menu<\/nav>/, 'site header kept');
+  assert.match(html, /data-event-id="eka" data-astro-cid-abc/, 'saved event rendered with the site styles');
+  assert.match(html, /PREVIEW — unpublished changes/);
+
+  const form = (event, csrf = me.csrfToken) => ({
+    method: 'POST',
+    headers: { Cookie: cookie, Origin: 'https://admin.example.org', 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ csrf, event: JSON.stringify(event) }).toString(),
+  });
+  const unsaved = { slug: 'navaratri', title: 'Navarātri <b>', order: 1, status: 'upcoming', date: 'Oct 20', flyerImage: '/assets/f.png' };
+  const withEdit = await (await s.call('/preview/events', form(unsaved))).text();
+  assert.match(withEdit, /Navarātri &lt;b&gt;/, 'unsaved event shown, escaped');
+  assert.match(withEdit, /data-event-id="navaratri"[^>]*>.*data-event-id="eka"/s, 'ordered like the site');
+  assert.equal((await s.call('/preview/events', form(unsaved, 'wrong'))).status, 403, 'needs the CSRF token');
+  // What browsers really send for a form post from the admin (Referrer-Policy: no-referrer).
+  const real = form(unsaved);
+  real.headers = { ...real.headers, Origin: 'null', 'Sec-Fetch-Site': 'same-origin' };
+  assert.equal((await s.call('/preview/events', real)).status, 200, 'same-site form post with Origin: null is allowed');
+  const cross = form(unsaved);
+  cross.headers = { ...cross.headers, Origin: 'null', 'Sec-Fetch-Site': 'cross-site' };
+  assert.equal((await s.call('/preview/events', cross)).status, 403, 'cross-site form post refused');
+  const invalid = await s.call('/preview/events', form({ ...unsaved, flyerImage: 'https://evil.example/x.jpg' }));
+  assert.equal(invalid.status, 400);
+  assert.match(await invalid.text(), /could not be shown/);
+});
+
+test('live status: reports when the published commit is on the live site', async t => {
+  const s = await setup(t);
+  const { authed } = await s.login();
+  // The fake site has no build-info.json → not live yet; invalid input refused.
+  assert.equal((await (await authed('/api/live-status?commit=abc1234')).json()).live, false);
+  assert.equal((await authed('/api/live-status?commit=../../x')).status, 400);
 });

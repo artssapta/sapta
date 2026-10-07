@@ -23,7 +23,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      # The site and its tests need no dev tools (wrangler is only for the admin).
+      - run: npm ci --omit=dev --no-audit --no-fund
       - run: npm test
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
