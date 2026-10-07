@@ -1,0 +1,35 @@
+// Cloudflare Worker for the hosted SAPTA admin. Deploy: npm run admin:deploy
+// Secrets (never in this file) are set once with `npx wrangler secret put NAME`:
+//   GOOGLE_CLIENT_SECRET, GITHUB_TOKEN, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, SESSION_SECRET
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sapta-admin",
+  "main": "admin/worker.mjs",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "assets": {
+    "directory": "admin/public",
+    "binding": "ASSETS",
+    // Every request goes through the Worker so security headers are always applied.
+    "run_worker_first": true
+  },
+  "observability": { "enabled": true },
+  "vars": {
+    // Leave PUBLIC_URL unset to use the workers.dev address; set it if you add a custom domain.
+    "CONTENT_STORE": "github",
+    "GITHUB_REPO": "artssapta/sapta",
+    "GITHUB_BRANCH": "main",
+    // Saves are drafts on this branch until "Publish"; set to "" to publish on every save.
+    "GITHUB_DRAFT_BRANCH": "drafts",
+    // Cloudflare Pages site built from the drafts branch (see README → "Preview").
+    "PREVIEW_URL": "",
+    "SITE_URL": "https://saptaarts.org",
+    "ADMIN_GOOGLE_EMAILS": "artssapta@gmail.com",
+    "GOOGLE_CLIENT_ID": "857433770973-noftm8giqvigu58qn6k8b7l38a4ph9ea.apps.googleusercontent.com",
+    "CLOUDINARY_CLOUD_NAME": "dkudoatww",
+    "CLOUDINARY_FOLDER": "sapta",
+    "MAX_PHOTO_MB": "10",
+    "MAX_VIDEO_MB": "100"
+  }
+}

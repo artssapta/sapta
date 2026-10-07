@@ -1,6 +1,15 @@
-# SAPTA team editor
+# SAPTA Team Editor & CMS
 
-Once activated, open `/admin/` on the SAPTA website and choose **Sign in to the content editor**. The editor is Pages CMS. Team members invited by email can edit content without learning Git or editing website files.
+SAPTA provides two easy ways to edit events, upload photos, and update registration links:
+
+1. **SAPTA Admin (recommended — nothing to install)**:
+   - Open the admin address (see README → "Hosted admin") and click **Login with Gmail**, choosing the **artssapta@gmail.com** account.
+   - **+ Add New Event** → type the title → **Upload Photos** (select all photos at once) → **Upload Flyer** → **Save Event**. Photos go to Cloudinary in a folder for that event and are shown in file-name order; use ↑ / ↓ to reorder.
+   - The website updates by itself about 2–3 minutes after saving.
+
+2. **Cloud Editor (Pages CMS at app.pagescms.org)**:
+   - For team members editing without a local development environment, open [https://app.pagescms.org](https://app.pagescms.org) or visit `/admin/` on the live website.
+   - It reads `.pages.yml` and directly commits updates to `artssapta/sapta` on GitHub.
 
 ## Photos
 

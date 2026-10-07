@@ -25,6 +25,22 @@ export function videoSource(value) {
     : null;
 }
 
+// Serve Cloudinary photos in the browser's best format (WebP/AVIF), at a
+// sensible quality, and no wider than `width`. Other URLs pass through
+// unchanged, as do Cloudinary URLs that already carry a transformation.
+export function cloudinaryImage(value, width = 1600) {
+  const url = httpsUrl(value);
+  if (!url || url.hostname !== 'res.cloudinary.com') return value;
+  const match = url.pathname.match(/^(\/[^/]+\/image\/upload\/)(.+)$/);
+  if (!match) return value;
+  const [, prefix, rest] = match;
+  const first = rest.split('/')[0];
+  const hasTransformation = rest.includes('/') && !/^v\d+$/.test(first) && /(^|,)[a-z]{1,3}_[^/]+$/.test(first);
+  if (hasTransformation) return value;
+  url.pathname = `${prefix}f_auto,q_auto,c_limit,w_${Math.round(width)}/${rest}`;
+  return url.href;
+}
+
 export function registrationLink(value) {
   return httpsUrl(value)?.href ?? null;
 }

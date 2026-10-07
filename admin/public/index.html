@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAPTA Admin & Media Portal</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #245681;
+      --primary-dark: #1d4770;
+      --primary-light: #eaf1f6;
+      --accent: #d97706;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --success: #15803d;
+      --success-bg: #f0fdf4;
+      --danger: #b91c1c;
+      --danger-bg: #fef2f2;
+      --cloudinary: #3448c5;
+      --cloudinary-light: #eef2ff;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    header {
+      background: var(--primary-dark);
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand h1 {
+      font-family: 'Lora', serif;
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .brand .badge {
+      background: rgba(255,255,255,0.18);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+    }
+    .user-pill {
+      background: rgba(255,255,255,0.12);
+      padding: 5px 12px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-link {
+      background: none;
+      border: none;
+      color: #fff;
+      opacity: 0.85;
+      cursor: pointer;
+      text-decoration: underline;
+      font-size: 13px;
+    }
+    .btn-link:hover { opacity: 1; }
+
+    .container {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+
+    .auth-wrap {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.06);
+    }
+    .login-card h2 {
+      font-family: 'Lora', serif;
+      font-size: 26px;
+      color: var(--primary-dark);
+      margin-bottom: 8px;
+    }
+    .login-card p {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+    input[type="text"], input[type="email"], input[type="password"], input[type="number"], select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(36, 86, 129, 0.15);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    .help-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+    .btn-secondary {
+      background: #fff;
+      border-color: #cbd5e1;
+      color: #334155;
+    }
+    .btn-secondary:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+    }
+    .btn-cloudinary {
+      background: var(--cloudinary);
+      color: #fff;
+    }
+    .btn-cloudinary:hover {
+      background: #2837a3;
+    }
+    .btn-danger {
+      background: var(--danger-bg);
+      color: var(--danger);
+      border-color: #fecaca;
+    }
+    .btn-danger:hover {
+      background: #fee2e2;
+    }
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+    .btn-block { width: 100%; }
+    .btn-google { display: flex; align-items: center; justify-content: center; gap: 10px; background: #fff; color: #1f1f1f; border: 1px solid #747775; text-decoration: none; }
+    .btn-google:hover { background: #f2f2f2; }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: none;
+      border: none;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { color: var(--primary); }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+    }
+    .card-img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      background: #e2e8f0;
+      border-bottom: 1px solid var(--border);
+    }
+    .card-body {
+      padding: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-title {
+      font-family: 'Lora', serif;
+      font-size: 20px;
+      color: var(--primary-dark);
+      margin-bottom: 4px;
+    }
+    .card-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .status-badge {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+    .status-upcoming { background: #dbeafe; color: #1e40af; }
+    .status-past { background: #f1f5f9; color: #475569; }
+    .status-open { background: #dcfce7; color: #166534; }
+    .status-coming-soon { background: #fef3c7; color: #92400e; }
+    .badge-cloudinary { background: var(--cloudinary-light); color: var(--cloudinary); font-weight:600; font-size:11px; padding:2px 6px; border-radius:4px; }
+    .badge-upload { background: #e0f2fe; color: #0369a1; font-weight:600; font-size:11px; padding:2px 6px; border-radius:4px; }
+    .badge-asset { background: #f3f4f6; color: #4b5563; font-weight:600; font-size:11px; padding:2px 6px; border-radius:4px; }
+
+    .card-stats {
+      font-size: 13px;
+      color: #475569;
+      margin-top: auto;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 860px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h3 {
+      font-family: 'Lora', serif;
+      font-size: 22px;
+      color: var(--primary-dark);
+    }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: #f8fafc;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .form-span-2 { grid-column: span 2; }
+
+    .gallery-editor-item {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: #f8fafc;
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .gallery-thumb {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: #e2e8f0;
+      flex-shrink: 0;
+    }
+    .gallery-editor-item input { flex: 1; }
+    .gallery-editor-item.is-uploading { opacity: .75; }
+    .gallery-editor-item.is-failed { border-color: var(--danger); background: #fef2f2; }
+    .upload-status { font-size: 12px; color: var(--text-muted); min-width: 120px; }
+    .upload-status.error { color: var(--danger); }
+    .progress { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+    .progress > span { display: block; height: 100%; width: 0; background: var(--primary); transition: width .2s; }
+    .status-list { list-style: none; padding: 0; margin: 0 0 16px; font-size: 14px; }
+    .status-list li { padding: 6px 0; border-bottom: 1px solid var(--border); }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideIn 0.2s ease-out;
+    }
+    @keyframes slideIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    .info-banner {
+      background: var(--primary-light);
+      border-left: 4px solid var(--primary);
+      padding: 16px 20px;
+      border-radius: 6px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: #1e3a5f;
+    }
+    .info-banner strong { font-weight: 600; display: block; margin-bottom: 4px; }
+
+    .dropzone {
+      border: 2px dashed #cbd5e1;
+      padding: 26px;
+      text-align: center;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #fafaf9;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .dropzone:hover {
+      border-color: var(--primary);
+      background: #f0f7fc;
+    }
+
+    .media-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .media-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.06);
+    }
+    .media-preview-wrap {
+      position: relative;
+      width: 100%;
+      height: 140px;
+      background: #f1f5f9;
+    }
+    .media-preview-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .media-info {
+      padding: 10px 12px;
+      font-size: 12px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .drafts-bar { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; display: grid; gap: 10px; }
+    .drafts-bar.is-clean { background: #f0fdf4; border-color: #86efac; }
+    .drafts-summary { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+    .drafts-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13px; }
+    .drafts-list li { display: flex; justify-content: space-between; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; }
+    .drafts-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .change-tag { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .03em; padding: 2px 6px; border-radius: 4px; background: #fef3c7; color: #92400e; margin-right: 6px; }
+    .draft-badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: #fef3c7; color: #92400e; margin-left: 6px; }
+    .folder-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .folder-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: #fff; font: 500 13px 'Inter', sans-serif; color: var(--text); cursor: pointer; }
+    .folder-btn .count { color: var(--text-muted); font-weight: 400; }
+    .folder-btn.folder-new { border-style: dashed; color: var(--primary); }
+    .folder-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; min-height: 4px; }
+    .move-select { width: 100%; margin-top: 6px; padding: 4px 6px; font-size: 11px; }
+    .folder-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+    .filter-pills {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .filter-pill {
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      color: #475569;
+    }
+    .filter-pill.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    @media (max-width: 680px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-span-2 { grid-column: span 1; }
+      .header-actions { flex-direction: column; align-items: flex-end; gap: 4px; }
+      .tabs { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>SAPTA</h1>
+      <span class="badge">Admin & Media Portal</span>
+    </div>
+    <div class="header-actions" id="header-auth" style="display:none;">
+      <div class="user-pill">
+        <span style="font-size:12px;">👤</span>
+        <span id="user-display"></span>
+      </div>
+      <a id="view-site" href="https://saptaarts.org" target="_blank" rel="noopener noreferrer" class="btn-link">View Site ↗</a>
+      <button class="btn-link" data-action="logout">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Login Screen -->
+    <div id="view-login" class="auth-wrap">
+      <div class="login-card">
+        <h2>Sign in to SAPTA Editor</h2>
+        <p>Sign in with the SAPTA Google account to manage events, Cloudinary media, and registrations.</p>
+        <div id="login-error" style="display:none; color:var(--danger); font-size:13px; margin-bottom:14px;"></div>
+        <a id="google-signin" href="/auth/google/start" class="btn btn-google btn-block">
+          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.2l7.9 6.2C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.2C1 16.6 0 20.2 0 24s1 7.4 2.7 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.2 0-11.5-4.2-13.4-9.9l-7.9 6.2C6.6 42.6 14.6 48 24 48z"/></svg>
+          Login with Gmail
+        </a>
+              </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="view-dashboard" style="display:none;">
+      <div class="info-banner">
+        <strong>SAPTA Editor</strong>
+        <span id="banner-text">Photos and videos are uploaded to Cloudinary into a folder for each event. Saving publishes your changes to the website in about 2–3 minutes.</span>
+      </div>
+
+      <!-- Unpublished drafts (shown when drafts are enabled) -->
+      <div id="drafts-bar" class="drafts-bar" style="display:none;" aria-live="polite">
+        <div class="drafts-summary">
+          <strong id="drafts-title">No unpublished changes</strong>
+          <span id="drafts-preview-state" class="help-text"></span>
+        </div>
+        <ul id="drafts-list" class="drafts-list"></ul>
+        <div class="drafts-actions">
+          <a id="drafts-preview" class="btn btn-secondary btn-sm" target="_blank" rel="noopener noreferrer" style="display:none;">Preview website ↗</a>
+          <button class="btn btn-primary btn-sm" id="drafts-publish" data-action="publishDrafts">Publish to website</button>
+          <button class="btn btn-danger btn-sm" id="drafts-discard" data-action="discardAllDrafts">Discard all</button>
+        </div>
+      </div>
+
+      <nav class="tabs">
+        <button class="tab-btn active" data-action="switchTab" data-arg="events">Events, Photos & Videos</button>
+        <button class="tab-btn" data-action="switchTab" data-arg="media">Media Library & Cloudinary</button>
+        <button class="tab-btn" data-action="switchTab" data-arg="registrations">Registrations</button>
+        <button class="tab-btn" data-action="switchTab" data-arg="settings">Status</button>
+        <button class="tab-btn" data-action="switchTab" data-arg="pagescms">How Publishing Works</button>
+      </nav>
+
+      <!-- Events Tab -->
+      <section id="tab-events">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <div>
+            <h2 style="font-family:'Lora',serif; font-size:24px; color:var(--primary-dark);">Concert Events</h2>
+            <p style="color:var(--text-muted); font-size:14px;">Manage upcoming and past student concerts, flyers, Cloudinary galleries, and videos.</p>
+          </div>
+          <button class="btn btn-primary" data-action="openNewEventModal">+ Add New Event</button>
+        </div>
+        <div id="events-grid" class="grid-cards">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- Media Library Tab -->
+      <section id="tab-media" style="display:none;">
+        <div style="margin-bottom:16px;">
+          <h2 style="font-family:'Lora',serif; font-size:24px; color:var(--primary-dark);">Media Library</h2>
+          <p style="color:var(--text-muted); font-size:14px;">Every event has its own folder (🎵), and you can make your own folders (📁) for anything else. Pick a folder to see and upload its photos and videos; use “Move to…” on a file to file it elsewhere.</p>
+        </div>
+
+        <!-- Folders: one per event -->
+        <div id="media-folders" class="folder-list" role="tablist" aria-label="Media folders"></div>
+        <div id="folder-tools" class="folder-tools"></div>
+
+        <!-- Upload into the selected folder -->
+        <div class="dropzone" data-action="pickFile" data-arg="quick-upload-input" style="margin-top:16px;">
+          <input type="file" id="quick-upload-input" style="display:none;" multiple accept="image/*,video/mp4,video/quicktime,video/webm,.heic,.heif,.mov" data-change="handleQuickUpload">
+          <div style="font-size:28px; margin-bottom:6px;">☁️</div>
+          <strong id="dropzone-label">Click to upload photos or videos</strong>
+          <p class="help-text" id="dropzone-help">Files go into the selected event's folder. To show them on the website, open the event and add them to its gallery.</p>
+        </div>
+
+        <!-- Media Grid -->
+        <div id="media-grid" class="grid-cards" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:16px;"></div>
+      </section>
+
+      <!-- Registrations Tab -->
+      <section id="tab-registrations" style="display:none;">
+        <div style="margin-bottom:20px;">
+          <h2 style="font-family:'Lora',serif; font-size:24px; color:var(--primary-dark);">Registration Forms</h2>
+          <p style="color:var(--text-muted); font-size:14px;">Toggle availability and paste updated Google Forms links for upcoming performances.</p>
+        </div>
+        <div id="registrations-list" class="grid-cards">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- Settings Tab -->
+      <section id="tab-settings" style="display:none;">
+        <div class="card" style="padding:28px; max-width:760px;">
+          <h2 style="font-family:'Lora',serif; font-size:24px; color:var(--primary-dark); margin-bottom:8px;">System Status</h2>
+          <p style="font-size:14px; color:var(--text-muted); margin-bottom:20px;">Live check of the connections the editor depends on. Credentials are stored on the server and are never sent to the browser.</p>
+          <ul class="status-list" id="cloud-status-list"><li>Checking…</li></ul>
+        </div>
+      </section>
+
+      <!-- Pages CMS Tab -->
+      <section id="tab-pagescms" style="display:none;">
+        <div class="card" style="padding:28px;">
+          <h2 style="font-family:'Lora',serif; font-size:24px; color:var(--primary-dark); margin-bottom:12px;">How publishing works</h2>
+          <div style="background:#f1f5f9; padding:18px; border-radius:8px; margin-bottom:20px;">
+            <h4 style="margin-bottom:8px; color:var(--primary-dark);">1. Photos and videos</h4>
+            <p style="font-size:14px; color:#334155;">Uploads go straight to Cloudinary, into a folder for the event. Their links are saved into the event in the order shown in the editor.</p>
+          </div>
+          <div style="background:#f1f5f9; padding:18px; border-radius:8px; margin-bottom:20px;">
+            <h4 style="margin-bottom:8px; color:var(--primary-dark);">2. Saving</h4>
+            <p style="font-size:14px; color:#334155;" id="publish-explainer">Saving an event or registration updates the website automatically. Changes appear on the live site in about 2–3 minutes.</p>
+          </div>
+          <div style="background:#f1f5f9; padding:18px; border-radius:8px;">
+            <h4 style="margin-bottom:8px; color:var(--primary-dark);">3. If two people edit at once</h4>
+            <p style="font-size:14px; color:#334155;">If someone else saved the same event after you opened it, your save is stopped instead of overwriting their work. Reload the page and make your change again.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Edit Event Modal -->
+  <div id="modal-event" class="modal-overlay" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-event-title">Edit Event</h3>
+        <button class="btn btn-secondary btn-sm" data-action="closeEventModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="event-form" data-submit="saveEvent">
+          <input type="hidden" id="ev-is-new" value="false">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="ev-slug">Identifier / Slug</label>
+              <input type="text" id="ev-slug" required placeholder="e.g. eka, go-rakshana" pattern="[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?" title="Lowercase letters, numbers and hyphens">
+              <span class="help-text">File name in src/content/events/ and the Cloudinary folder. Filled in from the title for new events.</span>
+            </div>
+            <div class="form-group">
+              <label for="ev-title">Event Title</label>
+              <input type="text" id="ev-title" required placeholder="e.g. Svāsthya">
+            </div>
+            <div class="form-group">
+              <label for="ev-order">Display Order</label>
+              <input type="number" id="ev-order" required min="1" value="1">
+              <span class="help-text">Lower numbers appear first.</span>
+            </div>
+            <div class="form-group">
+              <label for="ev-status">Status</label>
+              <select id="ev-status">
+                <option value="upcoming">Upcoming Event</option>
+                <option value="past">Past Event</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="ev-date">Date</label>
+              <input type="text" id="ev-date" required placeholder="e.g. August 29, 2026">
+            </div>
+            <div class="form-group">
+              <label for="ev-time">Time</label>
+              <input type="text" id="ev-time" placeholder="e.g. 2 PM - 4 PM">
+            </div>
+            <div class="form-group form-span-2">
+              <label for="ev-location">Venue / Location</label>
+              <input type="text" id="ev-location" placeholder="e.g. Sri Karpaga Ganapathi Temple, San Ramon, CA">
+            </div>
+            <div class="form-group form-span-2">
+              <label for="ev-subtitle">Subtitle</label>
+              <input type="text" id="ev-subtitle" placeholder="e.g. Harmony in Sound, Healing in Purpose">
+            </div>
+            <div class="form-group form-span-2">
+              <label for="ev-desc">About this Event</label>
+              <textarea id="ev-desc" rows="3"></textarea>
+            </div>
+            <!-- Flyer Image -->
+            <div class="form-group form-span-2">
+              <label>Event Flyer Image</label>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <input type="text" id="ev-flyer" required placeholder="https://res.cloudinary.com/... or /assets/..." style="flex:1;">
+                <button type="button" class="btn btn-secondary btn-sm" data-action="openMediaPicker" data-arg="flyer">Pick from Media</button>
+                <button type="button" class="btn btn-primary btn-sm" data-action="pickFile" data-arg="flyer-file-input">Upload Flyer</button>
+                <input type="file" id="flyer-file-input" style="display:none;" accept="image/*,.heic,.heif" data-change="uploadFlyerFile">
+              </div>
+              <div id="flyer-preview" style="margin-top:8px;"></div>
+            </div>
+          </div>
+
+          <!-- Photo Gallery Section -->
+          <div style="margin-top:24px; padding-top:18px; border-top:1px solid var(--border);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+              <div>
+                <h4 style="font-size:16px; color:var(--primary-dark);">Gallery Photos (Cloudinary & Local)</h4>
+                <p class="help-text">Shown in this order in the event gallery and lightbox. Multiple uploads are added in file-name order (phone photos are named in the order they were taken).</p>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="btn btn-secondary btn-sm" data-action="openMediaPicker" data-arg="gallery">+ Pick from Library</button>
+                <button type="button" class="btn btn-primary btn-sm" data-action="pickFile" data-arg="gallery-multi-upload">+ Upload Photos</button>
+                <input type="file" id="gallery-multi-upload" multiple style="display:none;" accept="image/*,.heic,.heif" data-change="uploadGalleryFiles">
+                <button type="button" class="btn btn-secondary btn-sm" data-action="addEmptyGalleryRow">+ Paste URL</button>
+              </div>
+            </div>
+            <div id="gallery-list"></div>
+          </div>
+
+          <!-- Videos Section -->
+          <div style="margin-top:24px; padding-top:18px; border-top:1px solid var(--border);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div>
+                <h4 style="font-size:16px; color:var(--primary-dark);">Event Videos</h4>
+                <p class="help-text">YouTube links for full concerts; uploaded clips are stored on Cloudinary (MOV is converted to MP4 automatically).</p>
+              </div>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="btn btn-secondary btn-sm" data-action="addVideoRow">+ YouTube Link</button>
+                <button type="button" class="btn btn-primary btn-sm" data-action="pickFile" data-arg="video-multi-upload">+ Upload Clips</button>
+                <input type="file" id="video-multi-upload" multiple style="display:none;" accept="video/mp4,video/quicktime,video/webm,.mov" data-change="uploadVideoFiles">
+              </div>
+            </div>
+            <div id="videos-list"></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-action="closeEventModal">Cancel</button>
+        <button type="submit" form="event-form" class="btn btn-primary" id="save-event-btn">Save Event</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Media Picker Modal -->
+  <div id="modal-picker" class="modal-overlay" style="display:none;">
+    <div class="modal" style="max-width:760px;">
+      <div class="modal-header">
+        <h3 id="picker-title">Select an Image</h3>
+        <button class="btn btn-secondary btn-sm" data-action="closeMediaPicker">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="picker-folders" class="folder-list" style="margin-bottom:12px;"></div>
+        <div id="picker-grid" class="grid-cards" style="grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:12px;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-action="closeMediaPicker">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/admin.js"></script>
+</body>
+</html>

@@ -8,11 +8,20 @@
   },
   "scripts": {
     "dev": "astro dev",
+    "admin": "node admin-server.mjs",
+    "admin:dev": "wrangler dev",
+    "admin:deploy": "npm test && wrangler deploy",
+    "dev:all": "node admin-server.mjs & astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "test": "node --test tests/*.test.mjs",
     "astro": "astro"
   },
   "dependencies": {
-    "astro": "^6.3.3"
+    "astro": "^6.3.3",
+    "js-yaml": "^4.2.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.148.0"
   }
 }

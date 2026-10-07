@@ -10,8 +10,11 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
     <p class="eyebrow">SAPTA · Team editor</p>
     <h1>Keep the community up to date.</h1>
     <p class="intro">Add event photos, share performances, and open registrations from one editor. Your updates appear in the existing website layouts after publishing finishes.</p>
-    <a class="signin" href="https://app.pagescms.org" target="_blank" rel="noopener noreferrer">Sign in to the content editor <span aria-hidden="true">↗</span></a>
-    <p class="signin-note">Opens Pages CMS in a new tab. Choose the SAPTA website after signing in.</p>
+    <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;">
+      <a class="signin" href="https://sapta-admin.artssapta.workers.dev" target="_blank" rel="noopener noreferrer">Open the SAPTA editor <span aria-hidden="true">↗</span></a>
+      <a class="signin signin-secondary" href="https://app.pagescms.org" target="_blank" rel="noopener noreferrer">Pages CMS Cloud <span aria-hidden="true">↗</span></a>
+    </div>
+    <p class="signin-note">Log in with the SAPTA Gmail account. Pages CMS remains available as an alternative.</p>
 
     <section aria-labelledby="event-heading">
       <div class="section-heading"><h2 id="event-heading">Photos & videos</h2><a href={`${base}/events/`}>View events →</a></div>
@@ -51,6 +54,8 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   .intro { font-size: 21px; max-width: 700px; margin: 20px 0 26px; }
   .signin { display: inline-flex; gap: 30px; background: #245681; color: white; padding: 15px 22px; border-radius: 6px; text-decoration: none; font: 500 15px 'Inter', sans-serif; }
   .signin:hover { background: #1d4770; }
+  .signin-secondary { background: #edeade; color: #1d4770; }
+  .signin-secondary:hover { background: #dfdaca; }
   .signin-note, .note { font: 400 13px/1.7 'Inter', sans-serif; color: #58676c; margin-top: 12px; }
   section { margin-top: 52px; border-top: 1px solid #ced7d8; padding-top: 28px; }
   .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }

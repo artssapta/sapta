@@ -1,0 +1,17 @@
+# Secrets — never commit. Copy .env.example to .env instead.
+.env
+.env.*
+!.env.example
+
+# Dependencies and build output
+node_modules/
+dist/
+.astro/
+
+# OS / editor noise
+.DS_Store
+*.log
+
+# Local Worker secrets
+.dev.vars
+.wrangler/
