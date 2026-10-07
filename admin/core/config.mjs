@@ -88,6 +88,14 @@ export function readConfig(env, defaults = {}) {
     cloudinary,
     // Site built from the drafts (Cloudflare Pages), shown as "Preview".
     previewUrl: String(env.PREVIEW_URL || '').replace(/\/+$/, ''),
+    // Secret Cloudflare Pages deploy hook that rebuilds the preview from the drafts.
+    previewDeployHook: (() => {
+      const hook = String(env.PREVIEW_DEPLOY_HOOK || '').trim();
+      if (hook && !/^https:\/\/api\.cloudflare\.com\/client\/v4\/pages\/webhooks\/deploy_hooks\/[\w-]+$/.test(hook)) {
+        throw new ConfigError('PREVIEW_DEPLOY_HOOK must be a Cloudflare Pages deploy hook URL.');
+      }
+      return hook;
+    })(),
     // Public website, used to preview /assets/... images from the admin.
     siteUrl: String(env.SITE_URL ?? defaults.siteUrl ?? 'https://saptaarts.org').replace(/\/+$/, ''),
     // Defaults match Cloudinary's free plan; raise them if the plan allows.

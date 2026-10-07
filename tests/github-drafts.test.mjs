@@ -166,3 +166,33 @@ test('discard restores one item, or everything, to the live version', async () =
   assert.deepEqual((await s.pending()).changes, []);
   assert.equal(repo.branches.main.get(EKA), 'eka v1');
 });
+
+import { createPreviewTrigger } from '../admin/core/preview.mjs';
+
+test('every change to the drafts asks for a preview rebuild; one call per request', async () => {
+  const repo = fakeRepo({ [EKA]: 'eka v1' });
+  let changes = 0;
+  const s = createGitHubStore({ token: 't', repo: 'artssapta/sapta', branch: 'main', draftBranch: 'drafts' },
+    { fetchImpl: repo.fetchImpl, onDraftsChanged: () => { changes++; } });
+  await s.list('src/content/events');
+  assert.equal(changes, 0, 'reading does not trigger builds');
+  await s.create(NEW, 'navaratri', 'm');
+  assert.equal(changes, 1);
+  repo.branches.main.set('src/content/registrations/group.md', 'published elsewhere');
+  await s.pending(); // throttled: no sync yet
+  await s.discard(NEW, 'm');
+  await s.publish({ message: 'p' });
+  assert.ok(changes >= 3, 'discard and publish also rebuild the preview');
+
+  const hookCalls = [];
+  const trigger = createPreviewTrigger('https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/abc', {
+    fetchImpl: async (url, init) => { hookCalls.push([url, init.method]); return new Response('{}'); },
+  });
+  await trigger.flush();
+  assert.equal(hookCalls.length, 0, 'nothing changed → no build');
+  trigger.markChanged(); trigger.markChanged(); trigger.markChanged();
+  await trigger.flush();
+  assert.deepEqual(hookCalls, [['https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/abc', 'POST']]);
+  await trigger.flush();
+  assert.equal(hookCalls.length, 1, 'flushed once');
+});

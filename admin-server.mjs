@@ -14,6 +14,7 @@ import { readConfig, ConfigError } from './admin/core/config.mjs';
 import { createApp } from './admin/core/app.mjs';
 import { createFsStore } from './admin/core/stores/fs.mjs';
 import { createGitHubStore } from './admin/core/stores/github.mjs';
+import { createPreviewTrigger } from './admin/core/preview.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_UI = path.join(ROOT, 'admin', 'public');
@@ -40,7 +41,10 @@ async function fileResponse(baseDir, urlPath) {
 /** Builds the Node HTTP server around the shared app. Exported for tests. */
 export function createAdminServer({ env = process.env, port = 4322, fetchImpl = fetch, rootDir = ROOT } = {}) {
   const config = readConfig(env, { store: 'fs', publicUrl: `http://localhost:${port}`, siteUrl: '' });
-  const store = config.store === 'github' ? createGitHubStore(config.github, { fetchImpl }) : createFsStore(rootDir);
+  const preview = createPreviewTrigger(config.previewDeployHook, { fetchImpl });
+  const store = config.store === 'github'
+    ? createGitHubStore(config.github, { fetchImpl, onDraftsChanged: preview.markChanged })
+    : createFsStore(rootDir);
   const handle = createApp({ config, store, fetchImpl, assets: p => fileResponse(PUBLIC_UI, p) });
   const siteDir = path.join(rootDir, 'public');
 
@@ -70,6 +74,7 @@ export function createAdminServer({ env = process.env, port = 4322, fetchImpl = 
       res.writeHead(response.status, headers);
       if (response.body && req.method !== 'HEAD') Readable.fromWeb(response.body).pipe(res);
       else res.end();
+      preview.flush();
     } catch (err) {
       console.error('[admin] request failed:', err);
       if (!res.headersSent) res.writeHead(500, { 'Content-Type': 'text/plain' });

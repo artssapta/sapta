@@ -3,6 +3,7 @@
 import { readConfig, ConfigError } from './core/config.mjs';
 import { createApp } from './core/app.mjs';
 import { createGitHubStore } from './core/stores/github.mjs';
+import { createPreviewTrigger } from './core/preview.mjs';
 
 let cached; // { env, origin, handle } — built once per isolate
 
@@ -10,19 +11,21 @@ let cached; // { env, origin, handle } — built once per isolate
 // host name is what routed the request here, so it can be trusted.
 function build(env, origin) {
   const config = readConfig(env, { store: 'github', publicUrl: origin });
-  return createApp({
+  const preview = createPreviewTrigger(config.previewDeployHook);
+  const handle = createApp({
     config,
-    store: createGitHubStore(config.github),
+    store: createGitHubStore(config.github, { onDraftsChanged: preview.markChanged }),
     assets: path => env.ASSETS.fetch(new Request(`https://assets.local${path}`)),
   });
+  return { handle, preview };
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const origin = new URL(request.url).origin;
     if (!cached || cached.env !== env || (!env.PUBLIC_URL && cached.origin !== origin)) {
       try {
-        cached = { env, origin, handle: build(env, origin) };
+        cached = { env, origin, ...build(env, origin) };
       } catch (err) {
         cached = undefined;
         if (err instanceof ConfigError) {
@@ -34,6 +37,9 @@ export default {
         throw err;
       }
     }
-    return cached.handle(request);
+    const response = await cached.handle(request);
+    // Rebuild the preview after the response is sent, if the drafts changed.
+    ctx.waitUntil(cached.preview.flush());
+    return response;
   },
 };

@@ -18,7 +18,7 @@ const SYNC_INTERVAL_MS = 30 * 1000;
 const MAX_CACHED_BLOBS = 300;
 const CONTENT_PREFIX = 'src/content/';
 
-export function createGitHubStore({ token, repo, branch, draftBranch = '' }, { fetchImpl = fetch } = {}) {
+export function createGitHubStore({ token, repo, branch, draftBranch = '' }, { fetchImpl = fetch, onDraftsChanged = () => {} } = {}) {
   const drafts = Boolean(draftBranch) && draftBranch !== branch;
   const workBranch = drafts ? draftBranch : branch;
 
@@ -110,13 +110,20 @@ export function createGitHubStore({ token, repo, branch, draftBranch = '' }, { f
       base: draftBranch, head: branch, commit_message: `Admin: bring drafts up to date with ${branch}`,
     });
     lastSync = Date.now();
-    if (status === 201 || status === 204) { syncProblem = null; return; }
+    if (status === 201 || status === 204) {
+      syncProblem = null;
+      if (status === 201) changed(); // the drafts now include newly published changes
+      return;
+    }
     if (status === 409) {
       syncProblem = 'A draft conflicts with a change that was published another way (for example in Pages CMS). Discard the draft for that item and make the change again.';
       throw new StoreError(syncProblem, 409);
     }
     throw fail(status, json, `update branch "${draftBranch}"`);
   }
+
+  // Called after anything changes the drafts branch, e.g. to rebuild the preview.
+  const changed = () => { if (drafts) { try { onDraftsChanged(); } catch (err) { console.warn(`[github] ${err.message}`); } } };
 
   // A merge conflict should not stop people from reading their drafts (it is
   // reported in pending()); any other failure, e.g. no permission, must surface
@@ -149,7 +156,7 @@ export function createGitHubStore({ token, repo, branch, draftBranch = '' }, { f
     async create(path, text, message) {
       await syncDrafts();
       const { status, json } = await call('PUT', contentsUrl(path), { message, content: encode(text), branch: workBranch });
-      if (status === 201 || status === 200) { remember(json.content.sha, text); return json.content.sha; }
+      if (status === 201 || status === 200) { remember(json.content.sha, text); changed(); return json.content.sha; }
       // Without a sha GitHub refuses to overwrite an existing file.
       if (status === 422 && /sha/i.test(json.message || '')) throw new StoreError('An event with this identifier already exists. Choose a different identifier.', 409);
       throw fail(status, json, `create ${path}`);
@@ -159,7 +166,7 @@ export function createGitHubStore({ token, repo, branch, draftBranch = '' }, { f
       if (!version) throw conflict();
       await syncDrafts();
       const { status, json } = await call('PUT', contentsUrl(path), { message, content: encode(text), branch: workBranch, sha: version });
-      if (status === 200 || status === 201) { remember(json.content.sha, text); return json.content.sha; }
+      if (status === 200 || status === 201) { remember(json.content.sha, text); changed(); return json.content.sha; }
       if (status === 409) throw conflict();
       if (status === 404 || status === 422) throw new StoreError('This item no longer exists. Reload the page.', 404);
       throw fail(status, json, `update ${path}`);
@@ -169,7 +176,7 @@ export function createGitHubStore({ token, repo, branch, draftBranch = '' }, { f
       if (!version) throw conflict();
       await syncDrafts();
       const { status, json } = await call('DELETE', contentsUrl(path), { message, sha: version, branch: workBranch });
-      if (status === 200) return;
+      if (status === 200) { changed(); return; }
       if (status === 409) throw conflict();
       if (status === 404 || status === 422) throw new StoreError('This item no longer exists. Reload the page.', 404);
       throw fail(status, json, `delete ${path}`);
@@ -226,6 +233,7 @@ export function createGitHubStore({ token, repo, branch, draftBranch = '' }, { f
       // draft arrived meanwhile this fails harmlessly and the next sync merges.
       await call('PATCH', `${repoUrl}/git/refs/heads/${encodeURIComponent(draftBranch)}`, { sha: json.sha, force: false });
       lastSync = 0;
+      changed();
       return { published: true, commit: json.sha };
     },
 
@@ -238,6 +246,7 @@ export function createGitHubStore({ token, repo, branch, draftBranch = '' }, { f
         if (status !== 200) throw fail(status, json, 'discard the drafts');
         syncProblem = null;
         lastSync = Date.now();
+        changed();
         return;
       }
       const [live, draft] = await Promise.all([
@@ -249,9 +258,11 @@ export function createGitHubStore({ token, repo, branch, draftBranch = '' }, { f
           message, content: live.json.content.replace(/\n/g, ''), branch: draftBranch, ...(draft.status === 200 ? { sha: draft.json.sha } : {}),
         });
         if (status !== 200 && status !== 201) throw fail(status, json, `discard the draft of ${path}`);
+        changed();
       } else if (live.status === 404 && draft.status === 200) {
         const { status, json } = await call('DELETE', contentsUrl(path), { message, sha: draft.json.sha, branch: draftBranch });
         if (status !== 200) throw fail(status, json, `discard the draft of ${path}`);
+        changed();
       }
     },
 
