@@ -131,7 +131,13 @@ openssl rand -hex 32 | npx wrangler secret put SESSION_SECRET
 - Environment variable `NODE_VERSION` = `22`
 - After the first build: Settings → Builds → *Branch control* → **None** for preview branches (only `drafts` is built)
 
-Then set `"PREVIEW_URL": "https://sapta-preview.pages.dev"` in `wrangler.jsonc` and run `npm run admin:deploy`. The preview copy sends a `noindex` header (`public/_headers`), so search engines ignore it. Note: the repository is public, so draft content on the `drafts` branch is publicly readable on GitHub.
+Then set `"PREVIEW_URL": "https://sapta-preview.pages.dev"` in `wrangler.jsonc` and run `npm run admin:deploy`.
+
+Cloudflare's automatic GitHub notifications proved unreliable, so the admin starts each preview build itself through a **deploy hook**: Pages project → Settings → Builds → *Deploy hooks* → add one for branch `drafts`, then store its URL:
+```bash
+npx wrangler secret put PREVIEW_DEPLOY_HOOK
+```
+A preview build takes about 30–40 seconds. The preview copy sends a `noindex` header (`public/_headers`), so search engines ignore it. Note: the repository is public, so draft content on the `drafts` branch is publicly readable on GitHub.
 
 **8. (Optional) Automatic admin deploys.** In GitHub → artssapta/sapta → Settings → Secrets and variables → Actions, add `CLOUDFLARE_API_TOKEN` (Cloudflare → My Profile → API Tokens → template *Edit Cloudflare Workers*) and `CLOUDFLARE_ACCOUNT_ID`. `.github/workflows/deploy-admin.yml` then redeploys the admin whenever its code changes.
 
@@ -151,6 +157,7 @@ Then set `"PREVIEW_URL": "https://sapta-preview.pages.dev"` in `wrangler.jsonc` 
 | `SESSION_SECRET` | secret | 32+ random characters; signs login cookies. Changing it signs everyone out |
 | `GITHUB_DRAFT_BRANCH` | `wrangler.jsonc` | Branch for drafts (`drafts`). Set to `""` to publish on every save |
 | `PREVIEW_URL` | `wrangler.jsonc` | Cloudflare Pages site built from the drafts branch |
+| `PREVIEW_DEPLOY_HOOK` | secret | Pages deploy hook URL; the admin calls it after each draft change |
 | `PUBLIC_URL` | `wrangler.jsonc` (optional) | Admin address if not the workers.dev one |
 | `SITE_URL` | `wrangler.jsonc` | Public site, used to preview `/assets/...` images |
 | `MAX_PHOTO_MB`, `MAX_VIDEO_MB` | `wrangler.jsonc` | Upload limits (default 10 / 100) |
