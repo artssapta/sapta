@@ -1,5 +1,7 @@
 ---
+import { responsiveImage } from '../lib/images.mjs';
 const { name, role, description, image } = Astro.props;
+const photo = responsiveImage(image, { sizes: '(max-width: 600px) 96px, 180px' });
 
 const resolvePath = (path: string) => {
   if (path && path.startsWith('/')) {
@@ -12,7 +14,7 @@ const resolvePath = (path: string) => {
 ---
 <div class="team-row reveal">
     <div class="team-img">
-        <img src={resolvePath(image)} alt={name} />
+        <img src={resolvePath(photo.src)} srcset={photo.srcset} sizes={photo.sizes} width={photo.width} height={photo.height} alt={name} loading="lazy" decoding="async" />
     </div>
     <div class="team-info">
         <h3>{name}</h3>
@@ -39,6 +41,7 @@ const resolvePath = (path: string) => {
 
     .team-img img {
         width: 100%;
+        height: auto; /* the img has width/height attributes (stops layout jumps) */
         aspect-ratio: 1 / 1;
         object-fit: cover;
         border-radius: 6px;
@@ -93,5 +96,26 @@ const resolvePath = (path: string) => {
             font-size: 16pt; 
             margin-top: 15px;
         }
+    }
+
+    /* Phones: photo beside the name and title, bio underneath, so each
+       person takes about a third of a screen instead of a whole one. */
+    @media (max-width: 600px) {
+        .team-row {
+            grid-template-columns: 96px 1fr;
+            grid-template-rows: auto auto auto;
+            column-gap: 18px;
+            row-gap: 0;
+            justify-items: stretch;
+            text-align: left;
+            margin-top: 22px;
+            padding-top: 22px;
+        }
+        .team-row:hover { transform: none; }
+        .team-img { width: 96px; margin: 0; grid-column: 1; grid-row: 1 / span 2; align-self: center; }
+        .team-info { display: contents; }
+        .team-info h3 { grid-column: 2; grid-row: 1; align-self: end; font-size: 15pt; margin: 0; }
+        .team-role { grid-column: 2; grid-row: 2; align-self: start; font-size: 12pt; margin: 4px 0 0; }
+        .team-desc { grid-column: 1 / -1; grid-row: 3; margin-top: 14px; font-size: 12.5pt; line-height: 1.6; }
     }
 </style>

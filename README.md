@@ -215,6 +215,16 @@ cp .env.example .env
 - `npm test` — unit and integration tests (Google, GitHub and Cloudinary are simulated; no network)
 - `npm run build` / `npm run preview` — production build of the site
 
+### Images
+
+Photos in `public/assets` / `public/uploads` are served as small WebP copies (480 / 960 / 1600 px) so phones download a fraction of the original size. After adding or replacing an image there, run:
+
+```bash
+npm run images
+```
+
+and commit `public/_img` (the tests fail with a reminder if you forget). The same script makes `favicon-32.png`, `apple-touch-icon.png` and `og-image.jpg` (the picture shown when a link to the site is shared). Cloudinary photos need nothing: Cloudinary resizes them on request. `src/lib/images.mjs` gives every `<img>` its `srcset`.
+
 ### Code layout
 
 ```text

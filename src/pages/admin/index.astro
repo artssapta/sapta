@@ -56,6 +56,9 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   .signin:hover { background: #1d4770; }
   .signin-secondary { background: #edeade; color: #1d4770; }
   .signin-secondary:hover { background: #dfdaca; }
+  @media (max-width: 600px) {
+    .section-heading a, li a, .note a { display: inline-block; padding: 10px 0; }
+  }
   .signin-note, .note { font: 400 13px/1.7 'Inter', sans-serif; color: #58676c; margin-top: 12px; }
   section { margin-top: 52px; border-top: 1px solid #ced7d8; padding-top: 28px; }
   .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }

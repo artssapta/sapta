@@ -1,12 +1,17 @@
 ---
+import { optimizedUrl } from '../lib/images.mjs';
+
 interface Props {
   title?: string;
   description?: string;
   noindex?: boolean;
+  /** Image for link previews (WhatsApp, iMessage, social media); defaults to the logo. */
+  image?: string;
 }
 
 const {
   noindex = false,
+  image,
   title = "SAPTA | Student Artists' Platform",
   description = "SAPTA is a non-profit, student-led organization that promotes Carnatic music. While providing students of all levels opportunities to perform, they also have a way to showcase their talents in unique ways.",
 } = Astro.props;
@@ -15,6 +20,10 @@ const resolvePath = (p: string) =>
   p.startsWith('/') ? `${import.meta.env.BASE_URL.replace(/\/$/, '')}${p}` : p;
 
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const site = 'https://saptaarts.org';
+const pageUrl = new URL(Astro.url.pathname, site).href;
+const shareImage = image ? new URL(image, site).href : `${site}/og-image.jpg`;
+const logo = optimizedUrl('/assets/image_186b79.png', 480);
 
 const isActive = (href: string) => {
   if (href === '/') return path === '/';
@@ -29,8 +38,20 @@ const isActive = (href: string) => {
     <title>{title}</title>
     <meta name="description" content={description}>
     {noindex && <meta name="robots" content="noindex, nofollow" />}
-    <link rel="icon" type="image/png" href={resolvePath("/favicon.png")} />
-    <link rel="apple-touch-icon" sizes="180x180" href={resolvePath("/favicon.png")} />
+    {!noindex && <link rel="canonical" href={pageUrl} />}
+    <meta name="theme-color" content="#336d9f">
+    <link rel="icon" type="image/png" sizes="32x32" href={resolvePath("/favicon-32.png")} />
+    <link rel="apple-touch-icon" sizes="180x180" href={resolvePath("/apple-touch-icon.png")} />
+    <!-- Link previews (WhatsApp, iMessage, Facebook, Instagram DMs) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SAPTA">
+    <meta property="og:title" content={title}>
+    <meta property="og:description" content={description}>
+    <meta property="og:url" content={pageUrl}>
+    <meta property="og:image" content={shareImage}>
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <script type="application/ld+json" is:inline>
       {
         "@context": "https://schema.org",
@@ -374,7 +395,10 @@ const isActive = (href: string) => {
             background: none;
             border: none;
             cursor: pointer;
-            padding: 0;
+            /* Same look, but a thumb-sized (about 44×44) area to tap. */
+            box-sizing: content-box;
+            padding: 12px 9px;
+            margin: -12px -9px;
             z-index: 1100;
         }
         .hamburger span {
@@ -763,6 +787,9 @@ const isActive = (href: string) => {
             .hamburger { display: flex; }
 
             .footer-main { padding: 32px 24px; gap: 28px; }
+            /* Comfortable tap targets for links in the footer. */
+            footer a { display: inline-block; padding: 8px 0; }
+            .footer-social a { padding: 8px; }
             .footer-bottom { padding: 14px 24px; }
         }
 
@@ -784,7 +811,7 @@ const isActive = (href: string) => {
     <header>
         <nav>
             <a href={resolvePath('/')} class="nav-logo">
-                <img src={resolvePath("/assets/image_186b79.png")} alt="SAPTA Logo">
+                <img src={resolvePath(logo)} alt="SAPTA Logo" width="38" height="36">
                 <span>SAPTA</span>
             </a>
             <ul class="nav-links">

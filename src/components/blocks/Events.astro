@@ -1,12 +1,18 @@
 ---
 import { getCollection } from 'astro:content';
-import { videoSource, cloudinaryImage } from '../../lib/media.mjs';
+import { videoSource } from '../../lib/media.mjs';
+import { responsiveImage, optimizedUrl } from '../../lib/images.mjs';
 const { title, color = "#316fa6" } = Astro.props;
 const events = Astro.props.events ?? (await getCollection('events'))
     .sort((a, b) => a.data.order - b.data.order || a.id.localeCompare(b.id))
     .map(entry => ({ ...entry.data, id: entry.id }));
-const resolvePath = (p) => p && p.startsWith('/') ? `${import.meta.env.BASE_URL.replace(/\/$/, '')}${p}` : cloudinaryImage(p);
-const bgImage = resolvePath("/assets/hero_music_banner.png");
+const resolvePath = (p) => p && p.startsWith('/') ? `${import.meta.env.BASE_URL.replace(/\/$/, '')}${p}` : p;
+const bgImage = optimizedUrl("/assets/hero_music_banner.png");
+// Phone-sized files for each layout; the lightbox opens data-full (sharp).
+// KEEP IN SYNC with admin/core/render-preview.mjs.
+const FLYER_SIZES = '(max-width: 960px) 92vw, 440px';
+const PHOTO_SIZES = '(max-width: 600px) 46vw, (max-width: 960px) 30vw, 240px';
+const pic = (src, sizes) => responsiveImage(src, { sizes });
 ---
 <section class="events-section">
     <div class="events-hero" style={`background-image: url(${bgImage}); background-color: ${color};`}>
@@ -49,7 +55,9 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                         <div class="upcoming-card-grid">
                             {/* Left: Flyer Image */}
                             <div class="upcoming-flyer-box">
-                                <img src={resolvePath(event.flyerImage)} alt={`${event.title} Flyer`} class="upcoming-flyer-img" />
+                                {(() => { const im = pic(event.flyerImage, FLYER_SIZES); return (
+                                <img src={im.src} srcset={im.srcset} sizes={im.sizes} width={im.width} height={im.height} alt={`${event.title} Flyer`} class="upcoming-flyer-img" decoding="async" data-full={optimizedUrl(event.flyerImage)} />
+                                ); })()}
                             </div>
 
                             {/* Right: Details & Description */}
@@ -187,7 +195,9 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
 
                             <div class="flyer-card">
                                 <div class="flyer-card-inner">
-                                    <img src={resolvePath(event.flyerImage)} alt={`${event.title} Flyer`} />
+                                    {(() => { const im = pic(event.flyerImage, FLYER_SIZES); return (
+                                    <img src={im.src} srcset={im.srcset} sizes={im.sizes} width={im.width} height={im.height} alt={`${event.title} Flyer`} loading="lazy" decoding="async" data-full={optimizedUrl(event.flyerImage)} />
+                                    ); })()}
                                 </div>
                             </div>
                         </div>
@@ -241,17 +251,23 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
                                     <h3 class="media-title">Event Gallery</h3>
                                     <div class="photo-grid-scroll">
                                         <div class="photo-grid">
-                                            {event.gallery.map((img) => (
+                                            {event.gallery.map((img) => { const im = pic(img.src, PHOTO_SIZES); return (
                                                 <div class="photo-card">
                                                     <div class="photo-card-inner">
                                                         <img 
-                                                            src={resolvePath(img.src)} 
+                                                            src={im.src}
+                                                            srcset={im.srcset}
+                                                            sizes={im.sizes}
+                                                            width={im.width}
+                                                            height={im.height}
                                                             alt={img.alt || `${event.title} event photo`}
                                                             loading="lazy"
+                                                            decoding="async"
+                                                            data-full={optimizedUrl(img.src)}
                                                         />
                                                     </div>
                                                 </div>
-                                            ))}
+                                            ); })}
                                         </div>
                                     </div>
                                 </div>
@@ -317,7 +333,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
           if (index < 0) index = currentImages.length - 1;
           if (index >= currentImages.length) index = 0;
           currentIndex = index;
-          modalImg.src = currentImages[currentIndex].src;
+          modalImg.src = currentImages[currentIndex].dataset.full || currentImages[currentIndex].currentSrc || currentImages[currentIndex].src;
           modalImg.alt = currentImages[currentIndex].alt;
         }
       };
@@ -340,10 +356,20 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
           }
           
           modal.classList.add('active');
-          modalImg.src = img.src;
+          modalImg.src = img.dataset.full || img.currentSrc || img.src;
           modalImg.alt = img.alt;
         });
       });
+
+      // Swipe left/right between photos on phones.
+      let touchX = null;
+      modal.addEventListener('touchstart', (e) => { touchX = e.touches.length === 1 ? e.touches[0].clientX : null; }, { passive: true });
+      modal.addEventListener('touchend', (e) => {
+        if (touchX === null || currentImages.length < 2) return;
+        const dx = e.changedTouches[0].clientX - touchX;
+        touchX = null;
+        if (Math.abs(dx) > 45) showImage(currentIndex + (dx < 0 ? 1 : -1));
+      }, { passive: true });
 
       if (prevBtn) prevBtn.addEventListener('click', (e) => { e.stopPropagation(); showImage(currentIndex - 1); });
       if (nextBtn) nextBtn.addEventListener('click', (e) => { e.stopPropagation(); showImage(currentIndex + 1); });
@@ -540,6 +566,7 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
     }
     .upcoming-flyer-img {
         width: 100%;
+        height: auto; /* the img has width/height attributes (stops layout jumps) */
         max-height: 540px;
         object-fit: contain;
         border-radius: 16px;
@@ -1077,6 +1104,26 @@ const bgImage = resolvePath("/assets/hero_music_banner.png");
         }
         .photo-card img {
             height: 125px;
+        }
+    }
+
+    /* Phones: two square thumbnails per row (tap to open the full photo). */
+    @media (max-width: 600px) {
+        .photo-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .photo-card img {
+            height: auto;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+        }
+        .event-tab-btn {
+            min-height: 44px;
+        }
+        .flyer-card img,
+        .upcoming-flyer-img {
+            height: auto;
         }
     }
 

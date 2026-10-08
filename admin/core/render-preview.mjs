@@ -5,7 +5,8 @@
 //
 // KEEP IN SYNC with those components. tests/preview-parity.test.mjs builds the
 // real site and fails if this output differs from Astro's.
-import { videoSource, cloudinaryImage, registrationLink } from '../../src/lib/media.mjs';
+import { videoSource, registrationLink } from '../../src/lib/media.mjs';
+import { responsiveImage, optimizedUrl } from '../../src/lib/images.mjs';
 
 // Astro's text/attribute escaping.
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -27,7 +28,14 @@ function makeH(cid) {
   return h;
 }
 
-const resolvePath = p => (p && p.startsWith('/') ? p : cloudinaryImage(p));
+const resolvePath = p => p;
+// Same sizes as Events.astro.
+const FLYER_SIZES = '(max-width: 960px) 92vw, 440px';
+const PHOTO_SIZES = '(max-width: 600px) 46vw, (max-width: 960px) 30vw, 240px';
+const imgAttrs = (src, sizes) => {
+  const im = responsiveImage(src, { sizes });
+  return { src: im.src, srcset: im.srcset, sizes: im.sizes, width: im.width, height: im.height };
+};
 
 const ICONS = {
   date: h => h('svg', { class: 'meta-icon', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
@@ -59,7 +67,7 @@ function upcomingPanel(h, event) {
   return h('div', { class: 'upcoming-event-card' },
     h('div', { class: 'upcoming-card-grid' },
       h('div', { class: 'upcoming-flyer-box' },
-        h.void('img', { src: resolvePath(event.flyerImage), alt: `${event.title} Flyer`, class: 'upcoming-flyer-img' })),
+        h.void('img', { ...imgAttrs(event.flyerImage, FLYER_SIZES), alt: `${event.title} Flyer`, class: 'upcoming-flyer-img', decoding: 'async', 'data-full': optimizedUrl(event.flyerImage) })),
       h('div', { class: 'upcoming-details-box' },
         h('div', { class: 'upcoming-badge-row' },
           h('span', { class: 'upcoming-badge-tag' }, h('span', { class: 'pulse-dot' }), ' Upcoming Event')),
@@ -99,7 +107,7 @@ function archivePanel(h, event) {
         event.description && h('div', { class: 'event-description' }, h('p', {}, h.text(event.description)))),
       h('div', { class: 'flyer-card' },
         h('div', { class: 'flyer-card-inner' },
-          h.void('img', { src: resolvePath(event.flyerImage), alt: `${event.title} Flyer` })))),
+          h.void('img', { ...imgAttrs(event.flyerImage, FLYER_SIZES), alt: `${event.title} Flyer`, loading: 'lazy', decoding: 'async', 'data-full': optimizedUrl(event.flyerImage) })))),
     h('div', { class: 'event-media-col' },
       event.videos?.length > 0 && h('div', { class: 'event-videos-section' },
         h('h3', { class: 'media-title' }, event.status === 'upcoming' ? 'Event videos' : 'Relive the Moment'),
@@ -110,7 +118,7 @@ function archivePanel(h, event) {
           h('div', { class: 'photo-grid' }, event.gallery.map(img =>
             h('div', { class: 'photo-card' },
               h('div', { class: 'photo-card-inner' },
-                h.void('img', { src: resolvePath(img.src), alt: img.alt || `${event.title} event photo`, loading: 'lazy' })))))))));
+                h.void('img', { ...imgAttrs(img.src, PHOTO_SIZES), alt: img.alt || `${event.title} event photo`, loading: 'lazy', decoding: 'async', 'data-full': optimizedUrl(img.src) })))))))));
 }
 
 /** The whole <section class="events-section">…</section>, as Events.astro renders it. */
@@ -118,7 +126,7 @@ export function renderEventsSection(events, { title, color = '#316fa6', cid } = 
   const h = makeH(cid);
   const sorted = [...events].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
   return h('section', { class: 'events-section' },
-    h('div', { class: 'events-hero', style: `background-image: url(${resolvePath('/assets/hero_music_banner.png')}); background-color: ${color};` },
+    h('div', { class: 'events-hero', style: `background-image: url(${optimizedUrl('/assets/hero_music_banner.png')}); background-color: ${color};` },
       h('div', { class: 'events-hero-overlay' }),
       h('div', { class: 'events-hero-content' }, h('h1', {}, h.text(title || 'Events')))),
     sorted.length > 0 && h('div', { class: 'events-nav-container' },
