@@ -86,6 +86,7 @@ export async function checkFormEmbed(value, { fetchImpl = fetch, timeoutMs = 600
   let embed = formEmbedUrl(value);
   const url = httpsUrl(value);
   if (!embed && url?.hostname.toLowerCase() === 'forms.gle') {
+    if (!verify) return { embed: null, reason: 'unreachable' }; // offline (tests): no lookups at all
     try {
       const response = await fetchImpl(url.href, { redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) });
       await response.body?.cancel?.();

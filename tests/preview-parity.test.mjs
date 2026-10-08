@@ -10,7 +10,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { renderEventsSection, renderRegistrationSection, normalizeHtml } from '../admin/core/render-preview.mjs';
-import { formEmbedUrl } from '../src/lib/media.mjs';
+import { formEmbedUrl, resolveFormEmbed } from '../src/lib/media.mjs';
 import { eventFromFile, registrationFromFile } from '../admin/core/content.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -24,11 +24,11 @@ const builds = {};
 function built(variant, page) {
   if (!builds[variant]) {
     let root = ROOT;
-    if (variant === 'open') {
+    if (variant !== 'real') {
       root = fs.mkdtempSync(path.join(os.tmpdir(), 'sapta-parity-src-'));
       for (const entry of ['src', 'astro.config.mjs', 'package.json']) fs.cpSync(path.join(ROOT, entry), path.join(root, entry), { recursive: true });
       for (const entry of ['public', 'node_modules']) fs.symlinkSync(path.join(ROOT, entry), path.join(root, entry));
-      for (const [id, data] of Object.entries(OPEN_REGISTRATIONS)) {
+      for (const [id, data] of Object.entries(variant === 'open' ? OPEN_REGISTRATIONS : SOON_REGISTRATIONS)) {
         fs.writeFileSync(path.join(root, 'src/content/registrations', `${id}.md`), `---\n${Object.entries(data).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n')}\n---\n`);
       }
     }
@@ -40,6 +40,11 @@ function built(variant, page) {
   }
   return fs.readFileSync(path.join(builds[variant], page, 'index.html'), 'utf-8');
 }
+
+const SOON_REGISTRATIONS = {
+  group: { title: 'Group Registration', status: 'coming-soon', message: "We're preparing the next round.", url: '' },
+  spotlight: { title: 'SAPTA Spotlight', status: 'coming-soon', message: 'Coming soon.', openMessage: 'Not shown while coming soon', url: 'https://forms.gle/abc' },
+};
 
 // Links that need no network at build time (a forms.gle link would).
 const OPEN_REGISTRATIONS = {
@@ -71,10 +76,16 @@ test('instant preview renders the Events section exactly like the site', { timeo
 });
 
 for (const id of ['group', 'spotlight']) {
-  test(`instant preview renders the ${id} registration page exactly like the site (coming soon)`, { timeout: 120_000 }, () => {
+  test(`instant preview renders the ${id} registration page exactly like the site (current content)`, { timeout: 120_000 }, async () => {
     const { markup, cid } = section(built('real', `registration/${id}`), 'registration');
     const reg = registrationFromFile(id, fs.readFileSync(path.join(contentDir('registrations'), `${id}.md`), 'utf-8'));
-    assert.equal(normalizeHtml(renderRegistrationSection(reg, { cid })), normalizeHtml(markup));
+    const embed = reg.status === 'open' ? await resolveFormEmbed(reg.url, { verify: false }) : null;
+    assert.equal(normalizeHtml(renderRegistrationSection(reg, { cid, embed })), normalizeHtml(markup));
+  });
+
+  test(`instant preview renders the ${id} registration page exactly like the site (coming soon)`, { timeout: 120_000 }, () => {
+    const { markup, cid } = section(built('soon', `registration/${id}`), 'registration');
+    assert.equal(normalizeHtml(renderRegistrationSection(SOON_REGISTRATIONS[id], { cid })), normalizeHtml(markup));
   });
 
   test(`instant preview renders the ${id} registration page exactly like the site (open)`, { timeout: 120_000 }, () => {
