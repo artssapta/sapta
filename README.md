@@ -57,6 +57,16 @@ Instant previews use the live site's page with the events/registration section r
 
 If someone else saved the same event after you opened it, your save is stopped (nothing is overwritten): reload and make the change again.
 
+### Registration forms
+
+In **Registrations**, paste the form link, set the status to **Open**, Preview, then save and publish:
+
+- **Google Forms** (`forms.gle/…` or `docs.google.com/forms/…`) are shown **inside** the registration page, using Google's official embed address.
+- Google refuses to embed a form that requires visitors to **sign in to Google** — for example when it has a **file-upload question** or "Collect email addresses" is set to **Verified**. The site checks this when it is built and shows an **Open registration form** button instead (the admin explains this when you save). To get the form inside the page, remove file-upload questions and set "Collect email addresses" to *Responder input*.
+- Other links (Jotform, Typeform, …) always get the button.
+- While open, the page shows **Message when open** (or "Registration is open! …" if empty); the coming-soon message and note are hidden automatically. Switching back to **Coming soon** hides the form.
+- The site rebuilds every 6 hours, so changes to a form's settings in Google are picked up without publishing.
+
 ### Folders
 
 Every event has its own folder automatically, and anyone can make extra folders that are not tied to an event (for rehearsals, posters, press photos…):
