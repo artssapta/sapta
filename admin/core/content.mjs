@@ -129,8 +129,17 @@ export function validateRegistration(id, body) {
   const status = body.status === 'open' ? 'open' : 'coming-soon';
   const url = text(body.url, { field: 'Form link', max: 2048 });
   if (url && !registrationLink(url)) throw new ValidationError('Form link must be a complete https:// URL.');
-  if (status === 'open' && !url) throw new ValidationError('Open registration requires a valid HTTPS form link.');
-  return { status, url, message: text(body.message, { field: 'Visitor message', max: 2000, required: true }) };
+  if (status === 'open' && !url) throw new ValidationError('To open registration, paste the form link (https://…) first.');
+  const fields = {
+    status,
+    // Required while coming soon. While open it is hidden, so an empty one
+    // gets a neutral default (the site schema needs a value).
+    message: text(body.message, { field: 'Message while coming soon', max: 2000, required: status !== 'open' }) || 'Registration will open soon.',
+    url,
+  };
+  const openMessage = text(body.openMessage, { field: 'Message when open', max: 2000 });
+  if (openMessage) fields.openMessage = openMessage;
+  return fields;
 }
 
 /** Normalises a stored event file for the editor. */
@@ -162,6 +171,7 @@ export function registrationFromFile(id, text) {
     title: String(data.title ?? id),
     status: data.status === 'open' ? 'open' : 'coming-soon',
     message: String(data.message ?? ''),
+    openMessage: String(data.openMessage ?? ''),
     url: String(data.url ?? ''),
   };
 }

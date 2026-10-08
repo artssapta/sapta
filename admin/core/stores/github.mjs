@@ -266,6 +266,14 @@ export function createGitHubStore({ token, repo, branch, draftBranch = '' }, { f
       }
     },
 
+    /** True when `commit` is part of `head`'s history (head is commit, or later). */
+    async contains(commit, head) {
+      if (!commit || !head) return false;
+      if (head.startsWith(commit)) return true;
+      const { status, json } = await call('GET', `${repoUrl}/compare/${encodeURIComponent(commit)}...${encodeURIComponent(head)}`);
+      return status === 200 && (json.status === 'ahead' || json.status === 'identical');
+    },
+
     async check() {
       const { status, json } = await call('GET', repoUrl);
       if (status !== 200) return { ok: false, detail: fail(status, json, 'access the repository').message };

@@ -34,7 +34,10 @@ const registrations = defineCollection({
   schema: z.object({
     title: z.string().min(1),
     status: z.enum(['coming-soon', 'open']).default('coming-soon'),
+    // Shown while "coming soon".
     message: z.string().min(1),
+    // Shown instead while open (a default is used when empty).
+    openMessage: optionalText,
     url: optionalText,
   }).refine(value => value.status !== 'open' || !!registrationLink(value.url), {
     message: 'An open registration must have a valid HTTPS form link.',

@@ -4,6 +4,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Rebuild every 6 hours so changes made elsewhere (e.g. a Google Form's
+  # settings that decide whether it can be embedded) reach the site.
+  schedule:
+    - cron: '17 */6 * * *'
 
 permissions:
   contents: read

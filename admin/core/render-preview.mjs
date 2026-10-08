@@ -138,21 +138,32 @@ export function renderEventsSection(events, { title, color = '#316fa6', cid } = 
         h('button', { class: 'lightbox-next', 'aria-label': 'Next image' }, '&#10095;'))));
 }
 
-/** <section class="registration">…</section>, as Registration.astro renders it. */
-export function renderRegistrationSection({ title, status, message, url }, { cid } = {}) {
+/**
+ * <section class="registration">…</section>, as Registration.astro renders it.
+ * `embed` is the result of resolveFormEmbed(url) (resolved by the caller,
+ * because it may need a network lookup).
+ */
+export function renderRegistrationSection({ title, status, message, openMessage, url }, { cid, embed = null } = {}) {
   const h = makeH(cid);
   const link = registrationLink(url);
   const isOpen = status === 'open' && link;
+  if (!isOpen) embed = null;
+  const visitorMessage = isOpen
+    ? (openMessage || (embed ? 'Registration is open! Fill in the form below.' : 'Registration is open! Use the button below to open the form.'))
+    : message;
   return h('section', { class: 'registration', 'aria-labelledby': 'registration-title' },
     h('p', { class: 'eyebrow' }, 'Perform with SAPTA'),
     h('h1', { id: 'registration-title' }, h.text(title)),
     h('div', { class: 'notice' },
       h('p', { class: 'status' }, isOpen ? 'Registration is open' : 'Coming soon'),
-      h('p', { class: 'message' }, h.text(message)),
-      isOpen
-        ? h('a', { class: 'action', href: link, target: '_blank', rel: 'noopener noreferrer' }, 'Open registration form ', h('span', { 'aria-hidden': 'true' }, '↗'))
-        : h('p', { class: 'note' }, 'The new registration link will appear on this page when it’s ready.'),
-      isOpen && h('p', { class: 'note' }, 'The form opens in a new tab.')),
+      h('p', { class: 'message' }, h.text(visitorMessage)),
+      !isOpen && h('p', { class: 'note' }, 'The new registration link will appear on this page when it’s ready.'),
+      isOpen && !embed && h('a', { class: 'action', href: link, target: '_blank', rel: 'noopener noreferrer' }, 'Open registration form ', h('span', { 'aria-hidden': 'true' }, '↗')),
+      isOpen && !embed && h('p', { class: 'note' }, 'The form opens in a new tab.')),
+    embed && h('div', { class: 'form-embed' },
+      h('iframe', { src: embed, title: `${title} form`, loading: 'lazy' }, 'Loading the registration form…'),
+      h('p', { class: 'note' }, 'Can’t see the form? ',
+        h('a', { href: link, target: '_blank', rel: 'noopener noreferrer' }, 'Open it in a new tab ', h('span', { 'aria-hidden': 'true' }, '↗')))),
     h('div', { class: 'links' },
       h('a', { href: '/events/' }, 'Explore our events ', h('span', { 'aria-hidden': 'true' }, '→')),
       h('a', { href: 'mailto:artssapta@gmail.com' }, 'Contact us')));

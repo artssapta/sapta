@@ -250,7 +250,7 @@ function showDashboard() {
     document.getElementById('banner-text').textContent = 'Local mode: saving changes the files on this computer. Commit and push them to publish.';
     document.getElementById('publish-explainer').textContent = 'Local mode: saving writes the files in this checkout. Run git add src/content, commit and push to publish.';
   }
-  loadEvents();
+  loadEvents().then(offerRestore);
   loadRegistrations();
   // The media library and status checks are slower; load them when their tab is opened.
   state.mediaStale = true;
@@ -634,6 +634,7 @@ function previewRegistration(_arg, button) {
   openInstantPreview(`/preview/registration/${encodeURIComponent(button.dataset.id)}`, 'registration', {
     status: fields.namedItem('status').value,
     message: fields.namedItem('message').value.trim(),
+    openMessage: fields.namedItem('openMessage').value.trim(),
     url: fields.namedItem('url').value.trim(),
   });
 }
@@ -647,6 +648,7 @@ async function saveEvent() {
   button.disabled = true;
   try {
     await api('/api/events', { method: 'POST', json: event });
+    forgetUnsaved();
     showToast(savedMessage('Event'));
     discardFreshUploads(new Set([event.flyerImage, ...event.gallery.map(g => g.src), ...event.videos.map(v => v.file).filter(Boolean)]));
     state.mediaStale = true;
@@ -654,11 +656,66 @@ async function saveEvent() {
     loadEvents();
     loadDrafts();
   } catch (err) {
+    if (err.status === 401) {
+      // Login expired while editing: keep the work so it can be restored.
+      stashUnsaved({ event, isNew: state.isNewEvent, version: state.editingVersion });
+      alert('Your login has expired. Your changes are kept: log in again and you will be offered to restore them.');
+      return;
+    }
     alert(err.message);
     if (err.status === 409) loadEvents();
   } finally {
     button.disabled = false;
   }
+}
+
+const UNSAVED_KEY = 'sapta-admin-unsaved-event';
+function stashUnsaved(value) {
+  try { localStorage.setItem(UNSAVED_KEY, JSON.stringify({ ...value, at: Date.now() })); } catch {}
+}
+function forgetUnsaved() {
+  try { localStorage.removeItem(UNSAVED_KEY); } catch {}
+}
+function readUnsaved() {
+  try {
+    const stash = JSON.parse(localStorage.getItem(UNSAVED_KEY) || 'null');
+    return stash?.event && Date.now() - stash.at < 7 * 24 * 3600 * 1000 ? stash : null;
+  } catch {
+    return null;
+  }
+}
+
+/** After logging in, shows a notice offering to reopen an edit that could not be saved. */
+function offerRestore() {
+  const stash = readUnsaved();
+  const notice = document.getElementById('restore-notice');
+  if (!stash) { notice.style.display = 'none'; return; }
+  notice.replaceChildren(
+    el('span', { textContent: `You have unsaved changes to “${stash.event.title || 'an event'}” from before your login expired. ` }),
+    el('button', { type: 'button', className: 'btn btn-primary btn-sm', textContent: 'Reopen them', dataset: { action: 'restoreUnsaved' } }),
+    el('button', { type: 'button', className: 'btn btn-secondary btn-sm', textContent: 'Discard', dataset: { action: 'discardUnsaved' } }),
+  );
+  notice.style.display = 'flex';
+}
+
+function restoreUnsaved() {
+  const stash = readUnsaved();
+  document.getElementById('restore-notice').style.display = 'none';
+  if (!stash) return;
+  state.isNewEvent = Boolean(stash.isNew);
+  state.editingVersion = stash.version || null;
+  state.freshUploads.clear();
+  document.getElementById('modal-event-title').textContent = stash.isNew ? 'Create New Event' : `Edit Event: ${stash.event.title}`;
+  document.getElementById('ev-slug').disabled = !stash.isNew;
+  fillEventForm(stash.event);
+  document.getElementById('modal-event').style.display = 'flex';
+  // Kept until the event is actually saved.
+}
+
+function discardUnsaved() {
+  if (!confirm('Throw away these unsaved changes?')) return;
+  forgetUnsaved();
+  document.getElementById('restore-notice').style.display = 'none';
 }
 
 async function deleteEvent(slug) {
@@ -1108,22 +1165,29 @@ async function loadRegistrations() {
         <h3 class="card-title">${esc(reg.title)}</h3>
         <span class="status-badge ${reg.status === 'open' ? 'status-open' : 'status-coming-soon'}">${reg.status === 'open' ? 'Open' : 'Coming soon'}</span>
       </div>
-      <form data-submit="saveRegistration" data-arg="${esc(reg.id)}">
+      <form data-submit="saveRegistration" data-arg="${esc(reg.id)}" class="reg-form ${reg.status === 'open' ? 'is-open' : 'is-soon'}">
         <input type="hidden" name="version" value="${esc(reg.version)}">
         <div class="form-group">
-          <label>Registration Status</label>
-          <select name="status">
-            <option value="coming-soon" ${reg.status === 'coming-soon' ? 'selected' : ''}>Coming soon (Hidden button)</option>
-            <option value="open" ${reg.status === 'open' ? 'selected' : ''}>Open (Show form button)</option>
+          <label>Registration status</label>
+          <select name="status" data-change="toggleRegistrationStatus">
+            <option value="coming-soon" ${reg.status === 'coming-soon' ? 'selected' : ''}>Coming soon — no form on the page</option>
+            <option value="open" ${reg.status === 'open' ? 'selected' : ''}>Open — show the form on the page</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Visitor Message</label>
-          <textarea name="message" rows="2" required>${esc(reg.message)}</textarea>
+          <label>Form link</label>
+          <input type="url" name="url" value="${esc(reg.url)}" placeholder="https://forms.gle/…  or  https://docs.google.com/forms/…">
+          <span class="help-text">Google Forms links are shown <strong>inside</strong> the page. Other links get an “Open registration form” button.</span>
         </div>
-        <div class="form-group">
-          <label>Form Link (HTTPS)</label>
-          <input type="url" name="url" value="${esc(reg.url)}" placeholder="https://forms.gle/...">
+        <div class="form-group only-open">
+          <label>Message when open</label>
+          <textarea name="openMessage" rows="2" placeholder="Registration is open! Fill in the form below.">${esc(reg.openMessage)}</textarea>
+          <span class="help-text">Optional. Leave empty to use the text shown in grey.</span>
+        </div>
+        <div class="form-group only-soon">
+          <label>Message while coming soon</label>
+          <textarea name="message" rows="2">${esc(reg.message)}</textarea>
+          <span class="help-text">Hidden automatically while registration is open.</span>
         </div>
         <div style="display:flex; gap:8px;">
           <button type="button" class="btn btn-secondary btn-sm" data-action="previewRegistration" data-id="${esc(reg.id)}">Preview</button>
@@ -1133,19 +1197,36 @@ async function loadRegistrations() {
     </div>`).join('');
 }
 
+/** Shows the message field that applies to the chosen status. */
+function toggleRegistrationStatus(select) {
+  const form = select.closest('form');
+  form.classList.toggle('is-open', select.value === 'open');
+  form.classList.toggle('is-soon', select.value !== 'open');
+}
+
 async function saveRegistration(e, id) {
   const fields = e.target.elements;
   try {
-    await api('/api/registrations/' + encodeURIComponent(id), {
+    const data = await api('/api/registrations/' + encodeURIComponent(id), {
       method: 'POST',
       json: {
         version: fields.namedItem('version').value,
         status: fields.namedItem('status').value,
         message: fields.namedItem('message').value.trim(),
+        openMessage: fields.namedItem('openMessage').value.trim(),
         url: fields.namedItem('url').value.trim(),
       },
     });
+    const opened = fields.namedItem('status').value === 'open';
     showToast(savedMessage('Registration'));
+    if (opened && data && data.embedded === false) {
+      const why = {
+        'needs-sign-in': 'Google only shows this form to people signed in to Google (for example because it has a file-upload question, or "Collect email addresses" is set to "Verified"), and Google does not allow that inside other websites.\n\nTo show it inside the page instead, remove file-upload questions and set "Collect email addresses" to "Responder input" in the form\'s Settings. The website re-checks every few hours.',
+        'not-supported': 'This link is not a Google Form, so it cannot be shown inside the page.',
+        'unreachable': 'The form could not be checked right now (or the link is wrong). Please open the link to make sure it works.',
+      }[data.embedReason] || '';
+      alert(`Saved. Visitors will get an “Open registration form” button rather than the form inside the page.\n\n${why}`);
+    }
   } catch (err) {
     alert(err.message);
   }
@@ -1182,12 +1263,12 @@ async function loadStatus() {
 const clickActions = {
   logout, switchTab, openNewEventModal, selectMediaFolder, closeEventModal, openMediaPicker, addEmptyGalleryRow,
   addVideoRow: () => addVideoRow(), closeMediaPicker, selectPickerFolder, editEvent, deleteEvent, copyUrl,
-  publishDrafts, discardDraft, discardAllDrafts, createFolder, renameFolder, deleteFolder,
+  publishDrafts, discardDraft, discardAllDrafts, createFolder, renameFolder, deleteFolder, restoreUnsaved, discardUnsaved,
   previewEvent, previewRegistration, previewAllDrafts: () => window.open('/preview/events', '_blank', 'noopener'),
   selectPickerImage, moveRowUp, moveRowDown, removeRow, retryUpload, deleteMedia,
   pickFile: id => document.getElementById(id)?.click(),
 };
-const changeActions = { handleQuickUpload, uploadFlyerFile, uploadGalleryFiles, uploadVideoFiles, moveMedia };
+const changeActions = { handleQuickUpload, uploadFlyerFile, uploadGalleryFiles, uploadVideoFiles, moveMedia, toggleRegistrationStatus };
 const submitActions = { saveEvent, saveRegistration };
 
 document.addEventListener('click', e => {
