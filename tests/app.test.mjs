@@ -340,3 +340,39 @@ test('live status: reports when the published commit is on the live site', async
   assert.equal((await (await authed('/api/live-status?commit=abc1234')).json()).live, false);
   assert.equal((await authed('/api/live-status?commit=../../x')).status, 400);
 });
+
+test('opening a registration: Google Form link saved, embed reported, coming-soon text kept but hidden', async t => {
+  const s = await setup(t);
+  const { authed } = await s.login();
+  const { registrations: [group] } = await (await authed('/api/registrations')).json();
+  const google = 'https://docs.google.com/forms/d/e/1FAIpQLScgKqjFdibHT11I5htoLphuKNhGikKiIOyrpeQwuGSD2ul0mw/viewform?usp=header';
+
+  const missing = await authed('/api/registrations/group', json({ version: group.version, status: 'open', message: 'Soon', url: '' }));
+  assert.equal(missing.status, 400, 'open needs a link');
+
+  const res = await authed('/api/registrations/group', json({ version: group.version, status: 'open', message: '', openMessage: 'Sign up below!', url: google }));
+  const body = await res.json();
+  assert.equal(res.status, 200);
+  assert.equal(body.embedded, true);
+  const saved = parseFrontmatter(await fs.readFile(path.join(s.root, 'src/content/registrations/group.md'), 'utf-8')).data;
+  assert.equal(saved.status, 'open');
+  assert.equal(saved.openMessage, 'Sign up below!');
+  assert.equal(saved.message, 'Registration will open soon.', 'empty hidden message gets a default');
+
+  const button = await (await authed('/api/registrations/group', json({ version: body.version, status: 'open', message: 'x', url: 'https://example.org/form' }))).json();
+  assert.equal(button.embedded, false, 'non-Google links are reported as not embeddable');
+});
+
+test('instant preview shows YouTube videos as thumbnails (the player cannot run in the sandbox)', async t => {
+  const s = await setup(t);
+  const { cookie, me } = await s.login();
+  const event = { slug: 'v', title: 'V', order: 1, status: 'past', date: 'D', flyerImage: '/assets/f.png', videos: [{ title: 'Concert', source: 'youtube', videoUrl: 'https://www.youtube.com/watch?v=F1VUwJJcerk' }] };
+  const html = await (await s.call('/preview/events', {
+    method: 'POST',
+    headers: { Cookie: cookie, Origin: 'https://admin.example.org', 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ csrf: me.csrfToken, event: JSON.stringify(event) }).toString(),
+  })).text();
+  assert.doesNotMatch(html, /youtube-nocookie\.com\/embed/);
+  assert.match(html, /href="https:\/\/www\.youtube\.com\/watch\?v=F1VUwJJcerk"/);
+  assert.match(html, /i\.ytimg\.com\/vi\/F1VUwJJcerk\/hqdefault\.jpg/);
+});

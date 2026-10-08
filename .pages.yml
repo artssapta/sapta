@@ -167,14 +167,18 @@ content:
             - name: open
               label: Open
       - name: message
-        label: Message for visitors
+        label: Message while coming soon
         type: text
         required: true
-        description: This appears underneath the status. Update it when registration opens.
+        description: Shown while registration is Coming soon. Hidden automatically when Open.
+      - name: openMessage
+        label: Message when open
+        type: text
+        description: Optional. Shown while registration is Open. Leave empty for "Registration is open! Fill in the form below."
       - name: url
         label: Registration form link
         type: string
-        description: Paste the new https:// form link. It stays hidden while registration is Coming soon.
+        description: Paste the https:// form link. Google Forms links (forms.gle or docs.google.com/forms) are shown inside the page; other links get a button. Hidden while Coming soon.
         pattern:
           regex: ^https://[^\s]+$
           message: Use a complete link beginning with https://.
@@ -202,14 +206,18 @@ content:
             - name: open
               label: Open
       - name: message
-        label: Message for visitors
+        label: Message while coming soon
         type: text
         required: true
-        description: This appears underneath the status. Update it when registration opens.
+        description: Shown while registration is Coming soon. Hidden automatically when Open.
+      - name: openMessage
+        label: Message when open
+        type: text
+        description: Optional. Shown while registration is Open. Leave empty for "Registration is open! Fill in the form below."
       - name: url
         label: Registration form link
         type: string
-        description: Paste the new https:// form link. It stays hidden while registration is Coming soon.
+        description: Paste the https:// form link. Google Forms links (forms.gle or docs.google.com/forms) are shown inside the page; other links get a button. Hidden while Coming soon.
         pattern:
           regex: ^https://[^\s]+$
           message: Use a complete link beginning with https://.

@@ -41,6 +41,53 @@ export function cloudinaryImage(value, width = 1600) {
   return url.href;
 }
 
+/**
+ * The officially embeddable address of a registration form, or null when the
+ * link cannot be embedded (the page then shows a button instead).
+ *  - Google Forms: any docs.google.com/forms/d/… link (viewform, edit,
+ *    prefill…) becomes …/viewform?embedded=true; prefilled answers are kept.
+ *  - Microsoft Forms: ResponsePage links get &embed=true.
+ * Short forms.gle links need a network lookup: see resolveFormEmbed().
+ */
+export function formEmbedUrl(value) {
+  const url = httpsUrl(value);
+  if (!url) return null;
+  const host = url.hostname.toLowerCase();
+  if (host === 'docs.google.com') {
+    const match = url.pathname.match(/^\/forms\/(?:u\/\d+\/)?d\/(e\/)?([\w-]{10,})(?:\/|$)/);
+    if (!match) return null;
+    const embed = new URL(`https://docs.google.com/forms/d/${match[1] || ''}${match[2]}/viewform`);
+    for (const [key, val] of url.searchParams) if (key.startsWith('entry.')) embed.searchParams.append(key, val);
+    embed.searchParams.set('embedded', 'true');
+    return embed.href;
+  }
+  if ((host === 'forms.office.com' || host === 'forms.microsoft.com') && /^\/pages\/responsepage\.aspx$/i.test(url.pathname) && url.searchParams.get('id')) {
+    const embed = new URL(url.href);
+    embed.searchParams.set('embed', 'true');
+    return embed.href;
+  }
+  return null;
+}
+
+/**
+ * Like formEmbedUrl, but also follows Google's forms.gle short links (one
+ * request, no body downloaded). Any failure means "not embeddable", never an
+ * error, so a slow network cannot break the build.
+ */
+export async function resolveFormEmbed(value, { fetchImpl = fetch, timeoutMs = 5000 } = {}) {
+  const direct = formEmbedUrl(value);
+  if (direct) return direct;
+  const url = httpsUrl(value);
+  if (!url || url.hostname.toLowerCase() !== 'forms.gle') return null;
+  try {
+    const response = await fetchImpl(url.href, { redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) });
+    const location = response.headers.get('location');
+    return location ? formEmbedUrl(new URL(location, url).href) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function registrationLink(value) {
   return httpsUrl(value)?.href ?? null;
 }

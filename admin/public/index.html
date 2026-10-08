@@ -459,6 +459,7 @@
       justify-content: space-between;
     }
 
+    .restore-notice { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #eff6ff; border: 1px solid #93c5fd; border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; font-size: 14px; }
     .drafts-bar { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; display: grid; gap: 10px; }
     .drafts-bar.is-clean { background: #f0fdf4; border-color: #86efac; }
     .drafts-summary { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
@@ -474,6 +475,7 @@
     .folder-list { display: flex; flex-wrap: wrap; gap: 8px; }
     .folder-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: #fff; font: 500 13px 'Inter', sans-serif; color: var(--text); cursor: pointer; }
     .folder-btn .count { color: var(--text-muted); font-weight: 400; }
+    .reg-form.is-open .only-soon, .reg-form.is-soon .only-open { display: none; }
     .folder-btn.folder-new { border-style: dashed; color: var(--primary); }
     .folder-tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; min-height: 4px; }
     .move-select { width: 100%; margin-top: 6px; padding: 4px 6px; font-size: 11px; }
@@ -545,6 +547,8 @@
         <span id="banner-text">Photos and videos are uploaded to Cloudinary into a folder for each event. Saving publishes your changes to the website in about 2–3 minutes.</span>
       </div>
 
+      <div id="restore-notice" class="restore-notice" style="display:none;" role="alert"></div>
+
       <!-- Unpublished drafts (shown when drafts are enabled) -->
       <div id="drafts-bar" class="drafts-bar" style="display:none;" aria-live="polite">
         <div class="drafts-summary">
@@ -610,7 +614,7 @@
       <section id="tab-registrations" style="display:none;">
         <div style="margin-bottom:20px;">
           <h2 style="font-family:'Lora',serif; font-size:24px; color:var(--primary-dark);">Registration Forms</h2>
-          <p style="color:var(--text-muted); font-size:14px;">Toggle availability and paste updated Google Forms links for upcoming performances.</p>
+          <p style="color:var(--text-muted); font-size:14px;">Paste the form link and set the status to Open: Google Forms then appear right on the registration page, and the “coming soon” message is hidden. Use Preview to check before saving.</p>
         </div>
         <div id="registrations-list" class="grid-cards">
           <!-- Populated by JS -->

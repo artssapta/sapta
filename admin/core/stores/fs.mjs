@@ -78,6 +78,10 @@ export function createFsStore(rootDir) {
       return out;
     },
 
+    async contains(commit, head) {
+      return Boolean(commit && head && head.startsWith(commit));
+    },
+
     async check() {
       return { ok: true, detail: `Saving to local files in ${root}. Commit and push to publish.` };
     },

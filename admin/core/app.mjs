@@ -16,6 +16,7 @@ import {
 } from './content.mjs';
 import { StoreError } from './stores/errors.mjs';
 import { renderEventsSection, renderRegistrationSection } from './render-preview.mjs';
+import { resolveFormEmbed } from '../../src/lib/media.mjs';
 
 const MB = 1024 * 1024;
 const STATIC = { '/': '/index.html', '/admin.js': '/admin.js', '/shared/cloudinary-url.mjs': '/shared/cloudinary-url.mjs' };
@@ -355,9 +356,23 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
     const banner = '<div role="status" style="position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2147483647;'
       + 'background:#92400e;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:10px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.25)">'
       + 'PREVIEW — unpublished changes. This is not the live website.</div>';
-    return (html.slice(0, start) + fresh + html.slice(end))
+    return (html.slice(0, start) + youtubeStills(fresh) + html.slice(end))
       .replace(/<head[^>]*>/i, m => `${m}<base href="${templateOrigin}/">`)
       .replace(/<\/body>/i, `${banner}</body>`);
+  }
+
+  /**
+   * YouTube's player cannot run inside the preview's security sandbox (it
+   * shows a black box), so in previews each video is shown as its thumbnail
+   * linking to YouTube. The live site keeps the real player.
+   */
+  function youtubeStills(html) {
+    return html.replace(/<iframe src="https:\/\/www\.youtube-nocookie\.com\/embed\/([\w-]{11})"([^>]*)>\s*<\/iframe>/g, (match, id, rest) => {
+      const scope = rest.match(/data-astro-cid-[a-z0-9]+/)?.[0] || '';
+      return `<a href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener noreferrer" ${scope} `
+        + `style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#000 url(https://i.ytimg.com/vi/${id}/hqdefault.jpg) center/cover;color:#fff;text-decoration:none;font:600 15px system-ui,sans-serif">`
+        + `<span style="background:rgba(0,0,0,.65);padding:10px 16px;border-radius:999px">▶ Watch on YouTube (plays on the live site)</span></a>`;
+    });
   }
 
   function previewResponse(html, status = 200) {
@@ -411,8 +426,9 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       const files = await store.list(REGISTRATIONS_DIR);
       const file = files.find(f => f.name === `${id}.md`);
       let data = file ? registrationFromFile(id, file.text) : { title: id, status: 'coming-soon', message: '', url: '' };
-      if (isPost) data = { ...data, ...validateRegistration(id, JSON.parse(form.get('registration') || '{}')) };
-      return previewResponse(await previewPage(`/registration/${id}/`, 'registration', ({ cid }) => renderRegistrationSection(data, { cid })));
+      if (isPost) data = { ...data, openMessage: '', ...validateRegistration(id, JSON.parse(form.get('registration') || '{}')) };
+      const embed = data.status === 'open' ? await resolveFormEmbed(data.url, { fetchImpl }) : null;
+      return previewResponse(await previewPage(`/registration/${id}/`, 'registration', ({ cid }) => renderRegistrationSection(data, { cid, embed })));
     }
     throw new HttpError(404, 'Not found.');
   }
@@ -512,7 +528,8 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
         : await store.update(eventPath(slug), text, String(body.version || ''), commitMessage(`update event "${data.title}"`, user));
       mediaCache.at = 0;
       if (body.isNew === true && config.cloudinary.ready) {
-        createFolder(config.cloudinary, eventFolder(slug), { fetchImpl }).catch(err => console.warn(`[media] ${err.message}`));
+        // Awaited: on Cloudflare, work left running after the response may be cut off.
+        await createFolder(config.cloudinary, eventFolder(slug), { fetchImpl }).catch(err => console.warn(`[media] ${err.message}`));
       }
       return json(200, { ok: true, slug, version, publishes: store.publishes, drafts: Boolean(store.drafts) });
     }
@@ -559,7 +576,10 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       try {
         const response = await fetchImpl(`${templateOrigin}/build-info.json?t=${Date.now()}`, { signal: AbortSignal.timeout(8000) });
         const info = response.ok ? await response.json() : {};
-        return json(200, { live: typeof info.commit === 'string' && info.commit.startsWith(commit), liveCommit: info.commit || null, builtAt: info.builtAt || null });
+        // A later publish (or a Pages CMS edit) may have replaced this deploy;
+        // the change is live as soon as the live version includes it.
+        const live = typeof info.commit === 'string' && /^[0-9a-f]{40}$/.test(info.commit) && await store.contains(commit, info.commit);
+        return json(200, { live, liveCommit: info.commit || null, builtAt: info.builtAt || null });
       } catch {
         return json(200, { live: false, liveCommit: null, unknown: true });
       }
@@ -597,7 +617,9 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       const current = (await store.list(REGISTRATIONS_DIR)).find(f => f.name === `${id}.md`);
       const title = current ? registrationFromFile(id, current.text).title : (id === 'group' ? 'Group Registration' : 'SAPTA Spotlight Registration');
       const version = await store.update(path, stringifyFrontmatter({ title, ...fields }), String(body.version || ''), commitMessage(`${fields.status === 'open' ? 'open' : 'update'} ${title}`, user));
-      return json(200, { ok: true, version, publishes: store.publishes, drafts: Boolean(store.drafts) });
+      // Tell the editor whether visitors will see the form embedded or a button.
+      const embed = fields.url ? await resolveFormEmbed(fields.url, { fetchImpl }) : null;
+      return json(200, { ok: true, version, embedded: Boolean(embed), publishes: store.publishes, drafts: Boolean(store.drafts) });
     }
 
     if (pathname === '/api/media' && request.method === 'GET') {

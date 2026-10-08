@@ -196,3 +196,17 @@ test('every change to the drafts asks for a preview rebuild; one call per reques
   await trigger.flush();
   assert.equal(hookCalls.length, 1, 'flushed once');
 });
+
+test('live check: a later deploy that includes the published commit counts as live', async () => {
+  const calls = [];
+  const fetchImpl = async url => {
+    calls.push(url);
+    const status = url.includes('aaaaaaa...bbbbbbb') ? 'ahead' : 'diverged';
+    return new Response(JSON.stringify({ status }), { status: 200 });
+  };
+  const s = createGitHubStore({ token: 't', repo: 'artssapta/sapta', branch: 'main' }, { fetchImpl });
+  assert.equal(await s.contains('aaaaaaa', 'aaaaaaa1234'), true, 'same commit, no API call');
+  assert.equal(calls.length, 0);
+  assert.equal(await s.contains('aaaaaaa', 'bbbbbbb'), true, 'live is newer and includes it');
+  assert.equal(await s.contains('ccccccc', 'bbbbbbb'), false);
+});
