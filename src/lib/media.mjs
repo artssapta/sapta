@@ -70,22 +70,52 @@ export function formEmbedUrl(value) {
 }
 
 /**
- * Like formEmbedUrl, but also follows Google's forms.gle short links (one
- * request, no body downloaded). Any failure means "not embeddable", never an
- * error, so a slow network cannot break the build.
+ * Decides whether a form link can be shown inside the page, and how.
+ * Returns { embed, reason }:
+ *   reason 'ok'            embed is the address to put in the <iframe>
+ *   reason 'not-supported' not a Google/Microsoft form → show a button
+ *   reason 'needs-sign-in' Google only shows this form to signed-in users
+ *                          (e.g. it has a file-upload question), and its
+ *                          sign-in page cannot appear inside other sites
+ *   reason 'unreachable'   the link could not be checked (network) → button
+ * Follows forms.gle short links and, for Google Forms, asks Google whether
+ * the embedded form loads for a visitor who is not signed in. Never throws,
+ * so a slow network can only ever mean "show a button", not a broken build.
  */
-export async function resolveFormEmbed(value, { fetchImpl = fetch, timeoutMs = 5000 } = {}) {
-  const direct = formEmbedUrl(value);
-  if (direct) return direct;
+export async function checkFormEmbed(value, { fetchImpl = fetch, timeoutMs = 6000, verify = !skipFormCheck() } = {}) {
+  let embed = formEmbedUrl(value);
   const url = httpsUrl(value);
-  if (!url || url.hostname.toLowerCase() !== 'forms.gle') return null;
-  try {
-    const response = await fetchImpl(url.href, { redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) });
-    const location = response.headers.get('location');
-    return location ? formEmbedUrl(new URL(location, url).href) : null;
-  } catch {
-    return null;
+  if (!embed && url?.hostname.toLowerCase() === 'forms.gle') {
+    try {
+      const response = await fetchImpl(url.href, { redirect: 'manual', signal: AbortSignal.timeout(timeoutMs) });
+      await response.body?.cancel?.();
+      const location = response.headers.get('location');
+      embed = location ? formEmbedUrl(new URL(location, url).href) : null;
+      if (!embed) return { embed: null, reason: location ? 'not-supported' : 'unreachable' };
+    } catch {
+      return { embed: null, reason: 'unreachable' };
+    }
   }
+  if (!embed) return { embed: null, reason: 'not-supported' };
+  if (!verify || !embed.startsWith('https://docs.google.com/')) return { embed, reason: 'ok' };
+  try {
+    const response = await fetchImpl(embed, { signal: AbortSignal.timeout(timeoutMs) });
+    await response.body?.cancel?.();
+    if (response.status === 401 || response.status === 403) return { embed: null, reason: 'needs-sign-in' };
+    return response.ok ? { embed, reason: 'ok' } : { embed: null, reason: 'unreachable' };
+  } catch {
+    return { embed: null, reason: 'unreachable' };
+  }
+}
+
+/** The address to embed, or null to show a button instead. */
+export async function resolveFormEmbed(value, options) {
+  return (await checkFormEmbed(value, options)).embed;
+}
+
+// Tests build the site offline; they set SAPTA_SKIP_FORM_CHECK=1.
+function skipFormCheck() {
+  return globalThis.process?.env?.SAPTA_SKIP_FORM_CHECK === '1';
 }
 
 export function registrationLink(value) {

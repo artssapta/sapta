@@ -33,7 +33,9 @@ function built(variant, page) {
       }
     }
     const out = fs.mkdtempSync(path.join(os.tmpdir(), 'sapta-parity-'));
-    execFileSync(process.execPath, [path.join(ROOT, 'node_modules/astro/bin/astro.mjs'), 'build', '--outDir', out, '--silent'], { cwd: root, stdio: 'pipe' });
+    execFileSync(process.execPath, [path.join(ROOT, 'node_modules/astro/bin/astro.mjs'), 'build', '--outDir', out, '--silent'], {
+      cwd: root, stdio: 'pipe', env: { ...process.env, SAPTA_SKIP_FORM_CHECK: '1' }, // no network needed
+    });
     builds[variant] = out;
   }
   return fs.readFileSync(path.join(builds[variant], page, 'index.html'), 'utf-8');

@@ -126,3 +126,20 @@ test('thumbnails are small Cloudinary renditions; videos get a still frame', () 
   );
   assert.equal(cloudinaryThumb('/assets/eka_flyer.png'), '/assets/eka_flyer.png');
 });
+
+import { checkFormEmbed } from '../src/lib/media.mjs';
+
+test('form embedding: only when Google will show the form to signed-out visitors', async () => {
+  const embedOf = id => `https://docs.google.com/forms/d/e/${id}/viewform?embedded=true`;
+  const fetchImpl = async (url, init) => {
+    if (url === 'https://forms.gle/short123') return new Response(null, { status: 302, headers: { location: 'https://docs.google.com/forms/d/e/1FAIpQLSopenform00/viewform?usp=send_form' } });
+    if (url === embedOf('1FAIpQLSopenform00')) return new Response('<form>', { status: 200 });
+    if (url === embedOf('1FAIpQLSsigninform')) return new Response('Sign in', { status: 401 });
+    throw new Error('offline');
+  };
+  assert.deepEqual(await checkFormEmbed('https://forms.gle/short123', { fetchImpl, verify: true }), { embed: embedOf('1FAIpQLSopenform00'), reason: 'ok' });
+  assert.deepEqual(await checkFormEmbed('https://docs.google.com/forms/d/e/1FAIpQLSsigninform/viewform', { fetchImpl, verify: true }), { embed: null, reason: 'needs-sign-in' });
+  assert.equal((await checkFormEmbed('https://example.org/form', { fetchImpl, verify: true })).reason, 'not-supported');
+  assert.equal((await checkFormEmbed('https://forms.gle/offline', { fetchImpl, verify: true })).reason, 'unreachable', 'network trouble means a button, never an error');
+  assert.equal((await checkFormEmbed('https://docs.google.com/forms/d/e/1FAIpQLSdownnnnnn/viewform', { fetchImpl, verify: true })).reason, 'unreachable');
+});

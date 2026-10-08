@@ -16,7 +16,7 @@ import {
 } from './content.mjs';
 import { StoreError } from './stores/errors.mjs';
 import { renderEventsSection, renderRegistrationSection } from './render-preview.mjs';
-import { resolveFormEmbed } from '../../src/lib/media.mjs';
+import { resolveFormEmbed, checkFormEmbed } from '../../src/lib/media.mjs';
 
 const MB = 1024 * 1024;
 const STATIC = { '/': '/index.html', '/admin.js': '/admin.js', '/shared/cloudinary-url.mjs': '/shared/cloudinary-url.mjs' };
@@ -618,8 +618,8 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       const title = current ? registrationFromFile(id, current.text).title : (id === 'group' ? 'Group Registration' : 'SAPTA Spotlight Registration');
       const version = await store.update(path, stringifyFrontmatter({ title, ...fields }), String(body.version || ''), commitMessage(`${fields.status === 'open' ? 'open' : 'update'} ${title}`, user));
       // Tell the editor whether visitors will see the form embedded or a button.
-      const embed = fields.url ? await resolveFormEmbed(fields.url, { fetchImpl }) : null;
-      return json(200, { ok: true, version, embedded: Boolean(embed), publishes: store.publishes, drafts: Boolean(store.drafts) });
+      const check = fields.url ? await checkFormEmbed(fields.url, { fetchImpl }) : { embed: null, reason: 'not-supported' };
+      return json(200, { ok: true, version, embedded: Boolean(check.embed), embedReason: check.reason, publishes: store.publishes, drafts: Boolean(store.drafts) });
     }
 
     if (pathname === '/api/media' && request.method === 'GET') {

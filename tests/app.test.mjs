@@ -33,6 +33,7 @@ async function setup(t, envOverrides = {}) {
     }
     const u = String(url);
     if (u.startsWith('https://saptaarts.org/build-info.json')) return new Response('{"commit":"0000000"}');
+    if (u.startsWith('https://docs.google.com/forms/')) return new Response('<form>', { status: 200 }); // embeddable form
     if (u === 'https://saptaarts.org/events/') {
       return new Response('<html><head><title>Events</title></head><body><nav>menu</nav><section class="events-section" data-astro-cid-abc>'
         + '<div class="events-hero" style="background-image: url(/assets/hero_music_banner.png); background-color: #2A7396;" data-astro-cid-abc>'

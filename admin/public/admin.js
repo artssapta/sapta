@@ -1220,7 +1220,12 @@ async function saveRegistration(e, id) {
     const opened = fields.namedItem('status').value === 'open';
     showToast(savedMessage('Registration'));
     if (opened && data && data.embedded === false) {
-      alert('Saved. Note: this link is not a Google Form, so the page will show an “Open registration form” button instead of the form itself.');
+      const why = {
+        'needs-sign-in': 'Google only shows this form to people signed in to Google (for example because it has a file-upload question, or "Collect email addresses" is set to "Verified"), and Google does not allow that inside other websites.\n\nTo show it inside the page instead, remove file-upload questions and set "Collect email addresses" to "Responder input" in the form\'s Settings. The website re-checks every few hours.',
+        'not-supported': 'This link is not a Google Form, so it cannot be shown inside the page.',
+        'unreachable': 'The form could not be checked right now (or the link is wrong). Please open the link to make sure it works.',
+      }[data.embedReason] || '';
+      alert(`Saved. Visitors will get an “Open registration form” button rather than the form inside the page.\n\n${why}`);
     }
   } catch (err) {
     alert(err.message);
