@@ -29,6 +29,8 @@ const state = {
   pickerFolder: 'all',
   drafts: false,
   previewUrl: null,
+  previewOrigin: null,
+  previewPass: null,
   draftChanges: [],
   draftHead: null,
   pickerTarget: null,
@@ -214,7 +216,7 @@ async function checkAuth() {
     Object.assign(state, {
       user: data.user, csrfToken: data.csrfToken, siteUrl: data.siteUrl || '',
       publishes: data.publishes, cloudinary: data.cloudinary, limits: data.limits,
-      drafts: data.drafts, previewUrl: data.previewUrl,
+      drafts: data.drafts, previewUrl: data.previewUrl, previewOrigin: data.previewOrigin,
     });
     showDashboard();
   } catch {
@@ -252,6 +254,7 @@ function showDashboard() {
   }
   loadEvents().then(offerRestore);
   loadRegistrations();
+  refreshPreviewPass();
   // The media library and status checks are slower; load them when their tab is opened.
   state.mediaStale = true;
 }
@@ -614,9 +617,31 @@ function collectEventForm() {
  * second: no saving and no build. Posted as a form so the preview opens as
  * its own isolated page.
  */
+let passTimer = null;
+/**
+ * Keeps a fresh pass for the separate preview server, renewed every 10
+ * minutes (passes last 15), so Preview opens immediately when clicked.
+ */
+async function refreshPreviewPass() {
+  clearTimeout(passTimer);
+  if (!state.previewOrigin) return;
+  try {
+    const data = await api('/api/preview-pass');
+    state.previewPass = data.token;
+  } catch {
+    state.previewPass = null; // previews then open here, sandboxed
+  }
+  passTimer = setTimeout(refreshPreviewPass, 10 * 60 * 1000);
+}
+
 function openInstantPreview(path, field, payload) {
-  const form = el('form', { method: 'POST', action: path, target: '_blank', style: 'display:none' }, [
-    el('input', { type: 'hidden', name: 'csrf', value: state.csrfToken || '' }),
+  // Preferred: the separate preview server (real videos and forms). Fallback:
+  // the sandboxed preview on this address.
+  const separate = state.previewOrigin && state.previewPass;
+  const form = el('form', { method: 'POST', action: separate ? state.previewOrigin + path : path, target: '_blank', style: 'display:none' }, [
+    separate
+      ? el('input', { type: 'hidden', name: 'token', value: state.previewPass })
+      : el('input', { type: 'hidden', name: 'csrf', value: state.csrfToken || '' }),
     el('input', { type: 'hidden', name: field, value: JSON.stringify(payload) }),
   ]);
   document.body.append(form);
@@ -1219,9 +1244,12 @@ async function saveRegistration(e, id) {
     });
     const opened = fields.namedItem('status').value === 'open';
     showToast(savedMessage('Registration'));
+    if (opened && data?.embedded && data.signIn) {
+      alert('Saved. The form will be shown inside the page, but this form requires visitors to sign in to Google before filling it in (for example because it has a file-upload question or verified email collection). Google\'s sign-in cannot open inside another website, so the page also offers to open the form in a new tab.\n\nFor the smoothest experience, remove file-upload questions and set "Collect email addresses" to "Responder input" in the form\'s Settings.');
+    }
     if (opened && data && data.embedded === false) {
       const why = {
-        'needs-sign-in': 'Google only shows this form to people signed in to Google (for example because it has a file-upload question, or "Collect email addresses" is set to "Verified"), and Google does not allow that inside other websites.\n\nTo show it inside the page instead, remove file-upload questions and set "Collect email addresses" to "Responder input" in the form\'s Settings. The website re-checks every few hours.',
+        'needs-sign-in': 'Google does not allow this form to be shown inside other websites.\n\nRemoving file-upload questions and setting "Collect email addresses" to "Responder input" in the form\'s Settings usually fixes this. The website re-checks every few hours.',
         'not-supported': 'This link is not a Google Form, so it cannot be shown inside the page.',
         'unreachable': 'The form could not be checked right now (or the link is wrong). Please open the link to make sure it works.',
       }[data.embedReason] || '';
@@ -1264,7 +1292,10 @@ const clickActions = {
   logout, switchTab, openNewEventModal, selectMediaFolder, closeEventModal, openMediaPicker, addEmptyGalleryRow,
   addVideoRow: () => addVideoRow(), closeMediaPicker, selectPickerFolder, editEvent, deleteEvent, copyUrl,
   publishDrafts, discardDraft, discardAllDrafts, createFolder, renameFolder, deleteFolder, restoreUnsaved, discardUnsaved,
-  previewEvent, previewRegistration, previewAllDrafts: () => window.open('/preview/events', '_blank', 'noopener'),
+  previewEvent, previewRegistration,
+  previewAllDrafts: () => window.open(state.previewOrigin && state.previewPass
+    ? `${state.previewOrigin}/preview/events?token=${encodeURIComponent(state.previewPass)}`
+    : '/preview/events', '_blank', 'noopener'),
   selectPickerImage, moveRowUp, moveRowDown, removeRow, retryUpload, deleteMedia,
   pickFile: id => document.getElementById(id)?.click(),
 };

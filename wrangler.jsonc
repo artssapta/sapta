@@ -24,6 +24,8 @@
     "GITHUB_DRAFT_BRANCH": "drafts",
     // Cloudflare Pages site built from the drafts branch (see README → "Preview").
     "PREVIEW_URL": "https://sapta-preview.pages.dev",
+    // Instant previews are served by the separate preview Worker below.
+    "PREVIEW_ORIGIN": "https://sapta-admin-preview.artssapta.workers.dev",
     "SITE_URL": "https://saptaarts.org",
     "ADMIN_GOOGLE_EMAILS": "artssapta@gmail.com",
     "GOOGLE_CLIENT_ID": "857433770973-noftm8giqvigu58qn6k8b7l38a4ph9ea.apps.googleusercontent.com",
@@ -31,5 +33,25 @@
     "CLOUDINARY_FOLDER": "sapta",
     "MAX_PHOTO_MB": "10",
     "MAX_VIDEO_MB": "100"
+  },
+  // The preview server: the same code in "preview" role, on its own address,
+  // so previews run real YouTube players and forms without any access to the
+  // admin's login. Deploy: npx wrangler deploy --env preview
+  // Secrets (set with --env preview): GITHUB_TOKEN, PREVIEW_SECRET (same value as the admin's).
+  "env": {
+    "preview": {
+      "name": "sapta-admin-preview",
+      "vars": {
+        "ADMIN_ROLE": "preview",
+        "CONTENT_STORE": "github",
+        "GITHUB_REPO": "artssapta/sapta",
+        "GITHUB_BRANCH": "main",
+        "GITHUB_DRAFT_BRANCH": "drafts",
+        "SITE_URL": "https://saptaarts.org",
+        "ADMIN_GOOGLE_EMAILS": "artssapta@gmail.com",
+        "CLOUDINARY_CLOUD_NAME": "dkudoatww",
+        "CLOUDINARY_FOLDER": "sapta"
+      }
+    }
   }
 }

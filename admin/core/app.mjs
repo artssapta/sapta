@@ -16,7 +16,7 @@ import {
 } from './content.mjs';
 import { StoreError } from './stores/errors.mjs';
 import { renderEventsSection, renderRegistrationSection } from './render-preview.mjs';
-import { resolveFormEmbed, checkFormEmbed } from '../../src/lib/media.mjs';
+import { checkFormEmbed } from '../../src/lib/media.mjs';
 
 const MB = 1024 * 1024;
 const STATIC = { '/': '/index.html', '/admin.js': '/admin.js', '/shared/cloudinary-url.mjs': '/shared/cloudinary-url.mjs' };
@@ -35,6 +35,12 @@ class HttpError extends Error {
  */
 export function createApp({ config, store, assets, fetchImpl = fetch }) {
   const codec = createTokenCodec(config.sessionSecret);
+  // Signs/checks the short-lived passes for the separate preview server.
+  const previewCodec = config.previewSecret ? createTokenCodec(config.previewSecret) : null;
+  const PREVIEW_PASS_SECONDS = 15 * 60;
+  // Previews run on their own address (no sandbox needed) or, when none is
+  // configured, here inside a strict sandbox.
+  const sandboxedPreviews = !(config.role === 'preview' || config.previewOrigin);
   const names = cookieNames(config.secure);
   const google = createGoogleAuth(config.google, { codec, fetchImpl });
   const canonicalHost = new URL(config.origin).host;
@@ -56,7 +62,7 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
     // Uploads go straight from the browser to Cloudinary.
     "connect-src 'self' https://api.cloudinary.com",
     "base-uri 'none'",
-    "form-action 'self'",
+    `form-action 'self'${config.previewOrigin ? ` ${config.previewOrigin}` : ''}`,
     "frame-ancestors 'none'",
   ].join('; ');
 
@@ -356,13 +362,15 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
     const banner = '<div role="status" style="position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2147483647;'
       + 'background:#92400e;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:10px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.25)">'
       + 'PREVIEW — unpublished changes. This is not the live website.</div>';
-    return (html.slice(0, start) + youtubeStills(fresh) + html.slice(end))
+    return (html.slice(0, start) + (sandboxedPreviews ? youtubeStills(fresh) : fresh) + html.slice(end))
       .replace(/<head[^>]*>/i, m => `${m}<base href="${templateOrigin}/">`)
       .replace(/<\/body>/i, `${banner}</body>`);
   }
 
   /**
-   * YouTube's player cannot run inside the preview's security sandbox (it
+   * Only used when previews are sandboxed on the admin's own address (no
+   * PREVIEW_ORIGIN, e.g. a minimal local setup). YouTube's player cannot run
+   * inside that sandbox (it
    * shows a black box), so in previews each video is shown as its thumbnail
    * linking to YouTube. The live site keeps the real player.
    */
@@ -380,9 +388,12 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-store',
       'X-Robots-Tag': 'noindex, nofollow',
-      // Runs the site's own scripts (tabs, lightbox) in an isolated sandbox
-      // with no access to the admin's login.
-      'Content-Security-Policy': "sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox; frame-ancestors 'none'",
+      // On the admin's own address, the site's scripts run in an isolated
+      // sandbox with no access to the login. The separate preview server has
+      // no login to protect, so the page runs normally (YouTube, forms).
+      'Content-Security-Policy': sandboxedPreviews
+        ? "sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox; frame-ancestors 'none'"
+        : "frame-ancestors 'none'",
     }));
     return new Response(html, { status, headers });
   }
@@ -401,7 +412,15 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
     const isPost = request.method === 'POST';
     if (!['GET', 'POST'].includes(request.method)) throw new HttpError(405, 'Method not allowed.');
     const form = isPost ? await readForm(request) : null;
-    requireUser(request, isPost ? { formToken: form.get('csrf') || '' } : {});
+    if (config.role === 'preview') {
+      // The preview server has no logins: it accepts a pass signed by the admin.
+      const pass = previewCodec.verify('preview', (isPost ? form.get('token') : url.searchParams.get('token')) || '');
+      if (!pass || !config.google.allowedEmails.has(pass.sub)) {
+        throw new HttpError(401, 'This preview link has expired. Click Preview in the admin again.');
+      }
+    } else {
+      requireUser(request, isPost ? { formToken: form.get('csrf') || '' } : {});
+    }
 
     if (url.pathname === '/preview/events') {
       // Saved drafts, optionally with one unsaved event from the editor on top.
@@ -427,8 +446,8 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       const file = files.find(f => f.name === `${id}.md`);
       let data = file ? registrationFromFile(id, file.text) : { title: id, status: 'coming-soon', message: '', url: '' };
       if (isPost) data = { ...data, openMessage: '', ...validateRegistration(id, JSON.parse(form.get('registration') || '{}')) };
-      const embed = data.status === 'open' ? await resolveFormEmbed(data.url, { fetchImpl }) : null;
-      return previewResponse(await previewPage(`/registration/${id}/`, 'registration', ({ cid }) => renderRegistrationSection(data, { cid, embed })));
+      const { embed = null, signIn = false } = data.status === 'open' ? await checkFormEmbed(data.url, { fetchImpl }) : {};
+      return previewResponse(await previewPage(`/registration/${id}/`, 'registration', ({ cid }) => renderRegistrationSection(data, { cid, embed, signIn })));
     }
     throw new HttpError(404, 'Not found.');
   }
@@ -440,6 +459,11 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
     const { pathname } = url;
     // A request under any other host name (e.g. DNS rebinding) is refused.
     if (!allowedHosts.has(url.host)) throw new HttpError(421, 'Unrecognised host.');
+
+    // The preview server only renders previews.
+    if (config.role === 'preview' && !pathname.startsWith('/preview/')) {
+      return new Response('SAPTA preview server. Open previews from the admin.', { status: 404, headers: secureHeaders(new Headers({ 'Content-Type': 'text/plain; charset=utf-8' })) });
+    }
 
     if (STATIC[pathname]) {
       if (!['GET', 'HEAD'].includes(request.method)) throw new HttpError(405, 'Method not allowed.');
@@ -498,12 +522,22 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
         publishes: store.publishes,
         drafts: Boolean(store.drafts),
         previewUrl: config.previewUrl || null,
+        previewOrigin: config.previewOrigin || null,
         cloudinary: { ready: config.cloudinary.ready, cloudName: config.cloudinary.cloudName },
         limits: config.limits,
       });
     }
 
     const user = requireUser(request);
+
+    if (pathname === '/api/preview-pass' && request.method === 'GET') {
+      if (!previewCodec || !config.previewOrigin) throw new HttpError(404, 'Separate previews are not configured.');
+      return json(200, {
+        origin: config.previewOrigin,
+        token: previewCodec.sign('preview', { sub: user.email }, PREVIEW_PASS_SECONDS),
+        expiresIn: PREVIEW_PASS_SECONDS,
+      });
+    }
 
     if (pathname === '/api/status' && request.method === 'GET') {
       const [storage, cloudinary] = await Promise.all([store.check(), checkCloudinary(config.cloudinary, { fetchImpl })]);
@@ -619,7 +653,7 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       const version = await store.update(path, stringifyFrontmatter({ title, ...fields }), String(body.version || ''), commitMessage(`${fields.status === 'open' ? 'open' : 'update'} ${title}`, user));
       // Tell the editor whether visitors will see the form embedded or a button.
       const check = fields.url ? await checkFormEmbed(fields.url, { fetchImpl }) : { embed: null, reason: 'not-supported' };
-      return json(200, { ok: true, version, embedded: Boolean(check.embed), embedReason: check.reason, publishes: store.publishes, drafts: Boolean(store.drafts) });
+      return json(200, { ok: true, version, embedded: Boolean(check.embed), embedReason: check.reason, signIn: Boolean(check.signIn), publishes: store.publishes, drafts: Boolean(store.drafts) });
     }
 
     if (pathname === '/api/media' && request.method === 'GET') {

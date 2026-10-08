@@ -17,6 +17,9 @@ function list(value, fallback) {
  */
 export function readConfig(env, defaults = {}) {
   const problems = [];
+  // "admin" is the editor; "preview" is the separate preview-only server that
+  // shows draft pages (see admin/core/app.mjs → preview role).
+  const role = (env.ADMIN_ROLE || defaults.role || 'admin') === 'preview' ? 'preview' : 'admin';
   const store = (env.CONTENT_STORE || defaults.store || 'github').toLowerCase();
   if (!['github', 'fs'].includes(store)) problems.push('CONTENT_STORE must be "github" or "fs".');
 
@@ -35,7 +38,7 @@ export function readConfig(env, defaults = {}) {
   // survive restarts; locally a random one per run is fine.
   let sessionSecret = env.SESSION_SECRET || '';
   if (!sessionSecret) {
-    if (secure) problems.push('SESSION_SECRET is required (at least 32 random characters).');
+    if (secure && role === 'admin') problems.push('SESSION_SECRET is required (at least 32 random characters).');
     else sessionSecret = crypto.randomBytes(32).toString('hex');
   } else if (sessionSecret.length < 32) {
     problems.push('SESSION_SECRET must be at least 32 characters.');
@@ -47,7 +50,19 @@ export function readConfig(env, defaults = {}) {
     allowedEmails: new Set(list(env.ADMIN_GOOGLE_EMAILS, 'artssapta@gmail.com')),
     redirectUri: `${origin}/auth/google/callback`,
   };
-  if (!google.clientId || !google.clientSecret) problems.push('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required.');
+  if (role === 'admin' && (!google.clientId || !google.clientSecret)) problems.push('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are required.');
+
+  // Previews are served from a different address (PREVIEW_ORIGIN) so the
+  // site's scripts, YouTube and Google Forms run normally there without any
+  // access to the admin's login. The admin signs short-lived preview passes
+  // with PREVIEW_SECRET; the preview server checks them.
+  let previewOrigin = '';
+  if (env.PREVIEW_ORIGIN || defaults.previewOrigin) {
+    try { previewOrigin = new URL(env.PREVIEW_ORIGIN || defaults.previewOrigin).origin; } catch { problems.push('PREVIEW_ORIGIN must be a full https:// address.'); }
+  }
+  const previewSecret = env.PREVIEW_SECRET || defaults.previewSecret || '';
+  if ((previewOrigin || role === 'preview') && previewSecret.length < 32) problems.push('PREVIEW_SECRET is required (at least 32 random characters) for separate previews.');
+  if (previewOrigin && previewOrigin === origin) problems.push('PREVIEW_ORIGIN must differ from the admin address.');
 
   const github = {
     token: (env.GITHUB_TOKEN || '').trim(),
@@ -79,6 +94,9 @@ export function readConfig(env, defaults = {}) {
   cloudinary.ready = cloudinary.problems.length === 0;
 
   return {
+    role,
+    previewOrigin,
+    previewSecret,
     store,
     origin,
     secure,

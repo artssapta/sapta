@@ -9,6 +9,7 @@ import fsp from 'node:fs/promises';
 import path from 'node:path';
 import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
+import crypto from 'node:crypto';
 import { loadEnvFile } from './admin/lib/env.mjs';
 import { readConfig, ConfigError } from './admin/core/config.mjs';
 import { createApp } from './admin/core/app.mjs';
@@ -39,8 +40,8 @@ async function fileResponse(baseDir, urlPath) {
 }
 
 /** Builds the Node HTTP server around the shared app. Exported for tests. */
-export function createAdminServer({ env = process.env, port = 4322, fetchImpl = fetch, rootDir = ROOT } = {}) {
-  const config = readConfig(env, { store: 'fs', publicUrl: `http://localhost:${port}`, siteUrl: '' });
+export function createAdminServer({ env = process.env, port = 4322, fetchImpl = fetch, rootDir = ROOT, role = 'admin', previewOrigin = '', previewSecret = '' } = {}) {
+  const config = readConfig(env, { store: 'fs', publicUrl: `http://localhost:${port}`, siteUrl: '', role, previewOrigin, previewSecret });
   const preview = createPreviewTrigger(config.previewDeployHook, { fetchImpl });
   const store = config.store === 'github'
     ? createGitHubStore(config.github, { fetchImpl, onDraftsChanged: preview.markChanged })
@@ -89,18 +90,26 @@ const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPat
 if (isMain) {
   loadEnvFile(path.join(ROOT, '.env'));
   const port = Number(process.env.ADMIN_PORT || 4322);
+  // Like the hosted setup, previews get their own address (the next port).
+  const previewPort = port + 1;
+  const previewOrigin = `http://localhost:${previewPort}`;
+  const previewSecret = process.env.PREVIEW_SECRET || crypto.randomBytes(32).toString('hex');
   let server;
+  let previewServer;
   try {
-    server = createAdminServer({ port });
+    server = createAdminServer({ port, previewOrigin, previewSecret });
+    previewServer = createAdminServer({ port: previewPort, role: 'preview', previewSecret });
   } catch (err) {
     if (!(err instanceof ConfigError)) throw err;
     console.error(`\n✖ The admin is not configured:\n  ${err.message.split('\n').join('\n  ')}\n\nSee README → "Hosted admin".\n`);
     process.exit(1);
   }
   const { config } = server;
+  previewServer.listen(previewPort, '127.0.0.1');
   server.listen(port, '127.0.0.1', () => {
     console.log('SAPTA admin (local)');
     console.log(`  URL:        http://localhost:${port}/`);
+    console.log(`  Previews:   ${previewOrigin}/ (opened from the admin)`);
     console.log(`  Login:      Google (${[...config.google.allowedEmails].join(', ')})`);
     console.log(`  Saves to:   ${config.store === 'github' ? `GitHub ${config.github.repo}@${config.github.branch} (publishes the site)` : 'local files (commit and push to publish)'}`);
     console.log(`  Cloudinary: ${config.cloudinary.ready ? `${config.cloudinary.cloudName} (signed uploads)` : `uploads disabled — ${config.cloudinary.problems.join(' ')}`}`);

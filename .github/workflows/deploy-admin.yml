@@ -49,3 +49,5 @@ jobs:
         if: steps.creds.outputs.ready == 'true'
       - run: npx wrangler deploy
         if: steps.creds.outputs.ready == 'true'
+      - run: npx wrangler deploy --env preview
+        if: steps.creds.outputs.ready == 'true'

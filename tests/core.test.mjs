@@ -135,11 +135,27 @@ test('form embedding: only when Google will show the form to signed-out visitors
     if (url === 'https://forms.gle/short123') return new Response(null, { status: 302, headers: { location: 'https://docs.google.com/forms/d/e/1FAIpQLSopenform00/viewform?usp=send_form' } });
     if (url === embedOf('1FAIpQLSopenform00')) return new Response('<form>', { status: 200 });
     if (url === embedOf('1FAIpQLSsigninform')) return new Response('Sign in', { status: 401 });
+    if (url === 'https://docs.google.com/forms/d/e/1FAIpQLSsigninform/viewform') return new Response('<form>', { status: 200, headers: { 'content-security-policy-report-only': "frame-ancestors 'none'" } });
+    if (url === embedOf('1FAIpQLSblockedform')) return new Response('', { status: 401 });
+    if (url === 'https://docs.google.com/forms/d/e/1FAIpQLSblockedform/viewform') return new Response('<form>', { status: 200, headers: { 'x-frame-options': 'DENY' } });
     throw new Error('offline');
   };
   assert.deepEqual(await checkFormEmbed('https://forms.gle/short123', { fetchImpl, verify: true }), { embed: embedOf('1FAIpQLSopenform00'), reason: 'ok' });
-  assert.deepEqual(await checkFormEmbed('https://docs.google.com/forms/d/e/1FAIpQLSsigninform/viewform', { fetchImpl, verify: true }), { embed: null, reason: 'needs-sign-in' });
+  // Sign-in forms: the normal page is shown (as the site did before), flagged so the page explains sign-in.
+  assert.deepEqual(await checkFormEmbed('https://docs.google.com/forms/d/e/1FAIpQLSsigninform/viewform', { fetchImpl, verify: true }),
+    { embed: 'https://docs.google.com/forms/d/e/1FAIpQLSsigninform/viewform', reason: 'ok', signIn: true });
+  assert.deepEqual(await checkFormEmbed('https://docs.google.com/forms/d/e/1FAIpQLSblockedform/viewform', { fetchImpl, verify: true }), { embed: null, reason: 'needs-sign-in' });
   assert.equal((await checkFormEmbed('https://example.org/form', { fetchImpl, verify: true })).reason, 'not-supported');
   assert.equal((await checkFormEmbed('https://forms.gle/offline', { fetchImpl, verify: true })).reason, 'unreachable', 'network trouble means a button, never an error');
   assert.equal((await checkFormEmbed('https://docs.google.com/forms/d/e/1FAIpQLSdownnnnnn/viewform', { fetchImpl, verify: true })).reason, 'unreachable');
+});
+
+import { renderRegistrationSection } from '../admin/core/render-preview.mjs';
+
+test('sign-in forms are embedded with a note linking to a new tab', () => {
+  const reg = { title: 'Group', status: 'open', message: 'Soon', url: 'https://forms.gle/abc' };
+  const html = renderRegistrationSection(reg, { embed: 'https://docs.google.com/forms/d/e/x/viewform', signIn: true });
+  assert.match(html, /class="note sign-in-note">This form asks you to sign in with Google/);
+  assert.match(html, /<iframe src="https:\/\/docs\.google\.com\/forms\/d\/e\/x\/viewform"/);
+  assert.doesNotMatch(renderRegistrationSection(reg, { embed: 'https://docs.google.com/forms/d/e/x/viewform?embedded=true' }), /sign-in-note/);
 });

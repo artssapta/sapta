@@ -143,7 +143,7 @@ export function renderEventsSection(events, { title, color = '#316fa6', cid } = 
  * `embed` is the result of resolveFormEmbed(url) (resolved by the caller,
  * because it may need a network lookup).
  */
-export function renderRegistrationSection({ title, status, message, openMessage, url }, { cid, embed = null } = {}) {
+export function renderRegistrationSection({ title, status, message, openMessage, url }, { cid, embed = null, signIn = false } = {}) {
   const h = makeH(cid);
   const link = registrationLink(url);
   const isOpen = status === 'open' && link;
@@ -161,6 +161,8 @@ export function renderRegistrationSection({ title, status, message, openMessage,
       isOpen && !embed && h('a', { class: 'action', href: link, target: '_blank', rel: 'noopener noreferrer' }, 'Open registration form ', h('span', { 'aria-hidden': 'true' }, '↗')),
       isOpen && !embed && h('p', { class: 'note' }, 'The form opens in a new tab.')),
     embed && h('div', { class: 'form-embed' },
+      signIn && h('p', { class: 'note sign-in-note' }, 'This form asks you to sign in with Google. If signing in doesn’t work here, ',
+        h('a', { href: link, target: '_blank', rel: 'noopener noreferrer' }, 'open the form in a new tab ', h('span', { 'aria-hidden': 'true' }, '↗'))),
       h('iframe', { src: embed, title: `${title} form`, loading: 'lazy' }, 'Loading the registration form…'),
       h('p', { class: 'note' }, 'Can’t see the form? ',
         h('a', { href: link, target: '_blank', rel: 'noopener noreferrer' }, 'Open it in a new tab ', h('span', { 'aria-hidden': 'true' }, '↗')))),

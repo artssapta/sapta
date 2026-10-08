@@ -53,7 +53,9 @@ SAPTA admin — Cloudflare Worker (admin/worker.mjs)
 6. **Save Event** — this saves a **draft**. Nothing changes on the website yet.
 7. The yellow bar lists every unpublished change. **Preview events page** shows all saved drafts instantly; **Full preview site** is a complete build of the drafts (ready about 30–40 seconds after a save). **Discard** throws one draft away; **Publish to website** makes all of them live and shows "Publishing…" until saptaarts.org actually serves the new version (usually 1–2 minutes), then "✓ Live".
 
-Instant previews use the live site's page with the events/registration section re-rendered by `admin/core/render-preview.mjs`, a copy of the Astro components' markup. `tests/preview-parity.test.mjs` builds the site and fails if the two differ, so a change to `Events.astro` or `Registration.astro` must be mirrored there. Embedded YouTube players may stay black in the instant preview (it runs in a security sandbox); they work on the full preview site.
+Instant previews use the live site's page with the events/registration section re-rendered by `admin/core/render-preview.mjs`, a copy of the Astro components' markup. `tests/preview-parity.test.mjs` builds the site and fails if the two differ, so a change to `Events.astro` or `Registration.astro` must be mirrored there.
+
+Previews open on a **separate address**, `https://sapta-admin-preview.artssapta.workers.dev` (the same code in "preview" role, `wrangler.jsonc` → `env.preview`). The admin hands it a signed 15-minute pass, so the preview needs no login and has no access to the admin's — which is why YouTube players and embedded forms work there exactly as on the live site. Locally, `npm run admin` starts it on port 4323.
 
 If someone else saved the same event after you opened it, your save is stopped (nothing is overwritten): reload and make the change again.
 
@@ -61,8 +63,8 @@ If someone else saved the same event after you opened it, your save is stopped (
 
 In **Registrations**, paste the form link, set the status to **Open**, Preview, then save and publish:
 
-- **Google Forms** (`forms.gle/…` or `docs.google.com/forms/…`) are shown **inside** the registration page, using Google's official embed address.
-- Google refuses to embed a form that requires visitors to **sign in to Google** — for example when it has a **file-upload question** or "Collect email addresses" is set to **Verified**. The site checks this when it is built and shows an **Open registration form** button instead (the admin explains this when you save). To get the form inside the page, remove file-upload questions and set "Collect email addresses" to *Responder input*.
+- **Google Forms** (`forms.gle/…` or `docs.google.com/forms/…`) are shown **inside** the registration page — Google's embed address when allowed, otherwise the normal form page (as the site did before).
+- Forms that require visitors to **sign in to Google** (a **file-upload question**, or "Collect email addresses: **Verified**") still show in the page, but Google pops up "Sign in to continue", and its sign-in cannot open inside another site. The page then adds a note linking to the form in a new tab. For the smoothest experience remove file-upload questions and set "Collect email addresses" to *Responder input*. If Google blocks a form completely, the page shows an **Open registration form** button instead.
 - Other links (Jotform, Typeform, …) always get the button.
 - While open, the page shows **Message when open** (or "Registration is open! …" if empty); the coming-soon message and note are hidden automatically. Switching back to **Coming soon** hides the form.
 - The site rebuilds every 6 hours, so changes to a form's settings in Google are picked up without publishing.
@@ -171,6 +173,8 @@ A preview build takes about 30–40 seconds. The preview copy sends a `noindex` 
 | `GITHUB_DRAFT_BRANCH` | `wrangler.jsonc` | Branch for drafts (`drafts`). Set to `""` to publish on every save |
 | `PREVIEW_URL` | `wrangler.jsonc` | Cloudflare Pages site built from the drafts branch |
 | `PREVIEW_DEPLOY_HOOK` | secret | Pages deploy hook URL; the admin calls it after each draft change |
+| `PREVIEW_ORIGIN` | `wrangler.jsonc` | Address of the preview server (instant previews) |
+| `PREVIEW_SECRET` | secret, on **both** Workers | Signs/checks preview passes (same random value on `sapta-admin` and `sapta-admin-preview`: `openssl rand -hex 32`) |
 | `PUBLIC_URL` | `wrangler.jsonc` (optional) | Admin address if not the workers.dev one |
 | `SITE_URL` | `wrangler.jsonc` | Public site, used to preview `/assets/...` images |
 | `MAX_PHOTO_MB`, `MAX_VIDEO_MB` | `wrangler.jsonc` | Upload limits (default 10 / 100) |

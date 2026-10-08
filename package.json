@@ -10,7 +10,7 @@
     "dev": "astro dev",
     "admin": "node admin-server.mjs",
     "admin:dev": "wrangler dev",
-    "admin:deploy": "npm test && wrangler deploy",
+    "admin:deploy": "npm test && wrangler deploy && wrangler deploy --env preview",
     "dev:all": "node admin-server.mjs & astro dev",
     "build": "astro build",
     "preview": "astro preview",
