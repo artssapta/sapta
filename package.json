@@ -10,10 +10,11 @@
     "dev": "astro dev",
     "admin": "node admin-server.mjs",
     "admin:dev": "wrangler dev",
-    "admin:deploy": "npm test && wrangler deploy",
+    "admin:deploy": "npm test && wrangler deploy && wrangler deploy --env preview",
     "dev:all": "node admin-server.mjs & astro dev",
     "build": "astro build",
     "preview": "astro preview",
+    "images": "node scripts/optimize-images.mjs",
     "test": "node --test tests/*.test.mjs",
     "astro": "astro"
   },
@@ -22,6 +23,7 @@
     "js-yaml": "^4.2.0"
   },
   "devDependencies": {
+    "sharp": "^0.34.5",
     "wrangler": "^4.148.0"
   }
 }

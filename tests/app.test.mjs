@@ -377,3 +377,53 @@ test('instant preview shows YouTube videos as thumbnails (the player cannot run 
   assert.match(html, /href="https:\/\/www\.youtube\.com\/watch\?v=F1VUwJJcerk"/);
   assert.match(html, /i\.ytimg\.com\/vi\/F1VUwJJcerk\/hqdefault\.jpg/);
 });
+
+test('separate preview server: admin issues passes; preview server needs one and plays real videos', async t => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'sapta-prev-'));
+  t.after(() => fs.rm(root, { recursive: true, force: true }));
+  await fs.mkdir(path.join(root, 'src/content/events'), { recursive: true });
+  await fs.mkdir(path.join(root, 'src/content/registrations'), { recursive: true });
+  await fs.writeFile(path.join(root, 'src/content/events/eka.md'), '---\ntitle: Eka\norder: 1\nstatus: past\ndate: D\nflyerImage: /assets/f.png\nvideos:\n  - title: Concert\n    source: youtube\n    videoUrl: https://www.youtube.com/watch?v=F1VUwJJcerk\n---\n');
+  const site = '<html><head></head><body><section class="events-section" data-astro-cid-abc><h1 data-astro-cid-abc>SAPTA Events</h1></section></body></html>';
+  const fetchImpl = async url => (String(url) === 'https://saptaarts.org/events/' ? new Response(site) : new Response('{}'));
+  const secret = 'p'.repeat(40);
+  const common = { SESSION_SECRET: 's'.repeat(40), GOOGLE_CLIENT_ID: 'id', GOOGLE_CLIENT_SECRET: 'x', CONTENT_STORE: 'fs', PREVIEW_SECRET: secret, CLOUDINARY_CLOUD_NAME: 'demo' };
+  const store = createFsStore(root);
+  const admin = createApp({ config: readConfig({ ...common, PUBLIC_URL: 'https://admin.example.org', PREVIEW_ORIGIN: 'https://preview.example.org' }), store, fetchImpl, assets: async () => null });
+  const preview = createApp({ config: readConfig({ ...common, PUBLIC_URL: 'https://preview.example.org', ADMIN_ROLE: 'preview', GOOGLE_CLIENT_ID: '', GOOGLE_CLIENT_SECRET: '' }), store, fetchImpl, assets: async () => null });
+
+  // Admin: passes only for logged-in users; form posts may go to the preview server.
+  assert.equal((await admin(new Request('https://admin.example.org/api/preview-pass'))).status, 401);
+  const { createTokenCodec } = await import('../admin/core/session.mjs');
+  const cookie = `__Host-sapta_session=${createTokenCodec('s'.repeat(40)).sign('session', { sub: 'artssapta@gmail.com', csrf: 'c' }, 600)}`;
+  const pass = await (await admin(new Request('https://admin.example.org/api/preview-pass', { headers: { Cookie: cookie } }))).json();
+  assert.equal(pass.origin, 'https://preview.example.org');
+  const page = await admin(new Request('https://admin.example.org/', { headers: { Cookie: cookie } }));
+  assert.equal(page.status, 404, 'no assets in this test');
+
+  // Preview server: pass required; no sandbox, real YouTube player.
+  const noPass = await preview(new Request('https://preview.example.org/preview/events'));
+  assert.equal(noPass.status, 401);
+  assert.match(await noPass.text(), /expired/);
+  const forged = createTokenCodec('w'.repeat(40)).sign('preview', { sub: 'artssapta@gmail.com' }, 600);
+  assert.equal((await preview(new Request(`https://preview.example.org/preview/events?token=${forged}`))).status, 401);
+  const expired = createTokenCodec(secret).sign('preview', { sub: 'artssapta@gmail.com' }, -1);
+  assert.equal((await preview(new Request(`https://preview.example.org/preview/events?token=${expired}`))).status, 401);
+  const ok = await preview(new Request(`https://preview.example.org/preview/events?token=${encodeURIComponent(pass.token)}`));
+  const html = await ok.text();
+  assert.equal(ok.status, 200);
+  assert.doesNotMatch(ok.headers.get('content-security-policy'), /sandbox/);
+  assert.match(html, /<iframe src="https:\/\/www\.youtube-nocookie\.com\/embed\/F1VUwJJcerk"/, 'real player');
+
+  // Unsaved edits are posted with the pass.
+  const posted = await preview(new Request('https://preview.example.org/preview/events', {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ token: pass.token, event: JSON.stringify({ slug: 'eka', title: 'Eka EDITED', order: 1, status: 'past', date: 'D', flyerImage: '/assets/f.png' }) }).toString(),
+  }));
+  assert.match(await posted.text(), /Eka EDITED/);
+
+  // The preview server does nothing else.
+  for (const p of ['/', '/api/events', '/api/me', '/auth/google/start']) {
+    assert.equal((await preview(new Request(`https://preview.example.org${p}`))).status, 404, p);
+  }
+});

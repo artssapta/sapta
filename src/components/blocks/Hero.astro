@@ -1,7 +1,8 @@
 ---
+import { optimizedUrl } from '../../lib/images.mjs';
 const { title, subtitle, color = "#316fa6", showDonate = false } = Astro.props;
 const resolvePath = (p) => p && p.startsWith('/') ? `${import.meta.env.BASE_URL.replace(/\/$/, '')}${p}` : p;
-const bgImage = resolvePath("/assets/hero_music_banner.png");
+const bgImage = resolvePath(optimizedUrl("/assets/hero_music_banner.png"));
 ---
 <section class="hero" style={`background-image: url(${bgImage}); background-color: ${color};`}>
     <div class="hero-overlay"></div>

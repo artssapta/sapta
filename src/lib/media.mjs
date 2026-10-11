@@ -72,7 +72,8 @@ export function formEmbedUrl(value) {
 /**
  * Decides whether a form link can be shown inside the page, and how.
  * Returns { embed, reason }:
- *   reason 'ok'            embed is the address to put in the <iframe>
+ *   reason 'ok'            embed is the address to put in the <iframe>;
+ *                          signIn: true when the form makes visitors sign in
  *   reason 'not-supported' not a Google/Microsoft form → show a button
  *   reason 'needs-sign-in' Google only shows this form to signed-in users
  *                          (e.g. it has a file-upload question), and its
@@ -99,13 +100,40 @@ export async function checkFormEmbed(value, { fetchImpl = fetch, timeoutMs = 600
   }
   if (!embed) return { embed: null, reason: 'not-supported' };
   if (!verify || !embed.startsWith('https://docs.google.com/')) return { embed, reason: 'ok' };
+  // 1. Google's official embed address. Forms that need sign-in (e.g. a
+  //    file-upload question) answer 401 here …
+  const official = await framable(embed, fetchImpl, timeoutMs);
+  if (official === 'ok') return { embed, reason: 'ok' };
+  if (official === 'unreachable') return { embed: null, reason: 'unreachable' };
+  // 2. … but their normal page still loads for visitors, and may be framed
+  //    (this is how the site embedded forms before).
+  const plain = new URL(embed);
+  plain.searchParams.delete('embedded');
+  const fallback = await framable(plain.href, fetchImpl, timeoutMs);
+  // signIn: the form shows inside the page, but Google asks visitors to sign
+  // in before they can fill it in, and that cannot happen inside the page.
+  if (fallback === 'ok') return { embed: plain.href, reason: 'ok', signIn: true };
+  return { embed: null, reason: fallback === 'unreachable' ? 'unreachable' : 'needs-sign-in' };
+}
+
+/**
+ * 'ok' if the page loads for a signed-out visitor and does not forbid being
+ * shown inside another site; 'blocked' if it needs sign-in or forbids
+ * framing; 'unreachable' on network trouble.
+ */
+async function framable(href, fetchImpl, timeoutMs) {
   try {
-    const response = await fetchImpl(embed, { signal: AbortSignal.timeout(timeoutMs) });
+    const response = await fetchImpl(href, { signal: AbortSignal.timeout(timeoutMs) });
     await response.body?.cancel?.();
-    if (response.status === 401 || response.status === 403) return { embed: null, reason: 'needs-sign-in' };
-    return response.ok ? { embed, reason: 'ok' } : { embed: null, reason: 'unreachable' };
+    if (response.status === 401 || response.status === 403) return 'blocked';
+    if (!response.ok) return 'unreachable';
+    const xfo = (response.headers.get('x-frame-options') || '').toLowerCase();
+    // Only the enforced header counts (Google also sends a report-only one).
+    const csp = (response.headers.get('content-security-policy') || '').toLowerCase();
+    if (xfo === 'deny' || xfo === 'sameorigin' || /frame-ancestors\s+'none'/.test(csp)) return 'blocked';
+    return 'ok';
   } catch {
-    return { embed: null, reason: 'unreachable' };
+    return 'unreachable';
   }
 }
 

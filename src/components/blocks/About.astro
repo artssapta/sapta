@@ -1,5 +1,7 @@
 ---
+import { responsiveImage } from '../../lib/images.mjs';
 const { title, text, image, imageSide = "right" } = Astro.props;
+const pic = responsiveImage(image, { sizes: '(max-width: 768px) 320px, 480px' });
 
 const resolvePath = (path: string) => {
   if (path && path.startsWith('/')) {
@@ -14,7 +16,7 @@ const resolvePath = (path: string) => {
     <div class={`about-grid ${imageSide === 'left' ? 'image-left' : 'image-right'}`}>
         {imageSide === 'left' && (
             <div class="about-img reveal reveal-left">
-                <img src={resolvePath(image)} alt={title} />
+                <img src={resolvePath(pic.src)} srcset={pic.srcset} sizes={pic.sizes} width={pic.width} height={pic.height} alt={title} loading="lazy" decoding="async" />
             </div>
         )}
         <div class="about-text reveal reveal-right">
@@ -23,7 +25,7 @@ const resolvePath = (path: string) => {
         </div>
         {imageSide !== 'left' && (
             <div class="about-img reveal reveal-right">
-                <img src={resolvePath(image)} alt={title} />
+                <img src={resolvePath(pic.src)} srcset={pic.srcset} sizes={pic.sizes} width={pic.width} height={pic.height} alt={title} loading="lazy" decoding="async" />
             </div>
         )}
     </div>
@@ -69,6 +71,7 @@ const resolvePath = (path: string) => {
 
     .about-img img {
         width: 100%;
+        height: auto; /* the img has width/height attributes (stops layout jumps) */
         aspect-ratio: 1 / 1;
         object-fit: cover;
         border-radius: 18px;
@@ -92,6 +95,15 @@ const resolvePath = (path: string) => {
         }
         .section-title {
             font-size: 24pt;
+        }
+    }
+
+    /* Phones: a comfortable reading size, left-aligned for easy reading. */
+    @media (max-width: 600px) {
+        .about-grid { text-align: left; }
+        .about-text p {
+            font-size: 13pt;
+            line-height: 1.7;
         }
     }
 </style>
