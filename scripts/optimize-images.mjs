@@ -69,7 +69,7 @@ for (const dir of SOURCES) {
 
 // Icons and the link-preview image (WhatsApp, iMessage, social media),
 // all made from the logo.
-const LOGO = path.join(PUBLIC, 'assets', 'image_186b79.png');
+const LOGO = path.join(PUBLIC, 'assets', 'logo.png');
 const LOGO_BLUE = { r: 51, g: 109, b: 159 };
 const icons = [
   ['favicon-32.png', img => img.resize(32, 32, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } }).png()],
