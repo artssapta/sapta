@@ -126,7 +126,7 @@ export function renderEventsSection(events, { title, color = '#316fa6', cid } = 
   const h = makeH(cid);
   const sorted = [...events].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
   return h('section', { class: 'events-section' },
-    h('div', { class: 'events-hero', style: `background-image: url(${optimizedUrl('/assets/hero_music_banner.png')}); background-color: ${color};` },
+    h('div', { class: 'events-hero', style: `background-image: url(${optimizedUrl('/assets/hero-banner.png')}); background-color: ${color};` },
       h('div', { class: 'events-hero-overlay' }),
       h('div', { class: 'events-hero-content' }, h('h1', {}, h.text(title || 'Events')))),
     sorted.length > 0 && h('div', { class: 'events-nav-container' },

@@ -7,7 +7,7 @@ const events = Astro.props.events ?? (await getCollection('events'))
     .sort((a, b) => a.data.order - b.data.order || a.id.localeCompare(b.id))
     .map(entry => ({ ...entry.data, id: entry.id }));
 const resolvePath = (p) => p && p.startsWith('/') ? `${import.meta.env.BASE_URL.replace(/\/$/, '')}${p}` : p;
-const bgImage = optimizedUrl("/assets/hero_music_banner.png");
+const bgImage = optimizedUrl("/assets/hero-banner.png");
 // Phone-sized files for each layout; the lightbox opens data-full (sharp).
 // KEEP IN SYNC with admin/core/render-preview.mjs.
 const FLYER_SIZES = '(max-width: 960px) 92vw, 440px';
