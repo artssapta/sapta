@@ -1,15 +1,12 @@
 ---
 title: Eka
-order: 2
+order: 4
 status: past
 subtitle: It All Begins with One
 date: March 14, 2026
 time: 2 PM - 4 PM
 location: Sri Karpaga Ganapathi Temple, San Ramon, CA
-description: SAPTA's inaugural event — 'Eka' (meaning One) — celebrated the
-  launch of the Student Artists' Platform with student vocal and instrumental
-  Carnatic performances. Proceeds went directly to support the Sri Karpaga
-  Ganapathi Temple.
+description: SAPTA's inaugural event — 'Eka' (meaning One) — celebrated the launch of the Student Artists' Platform with student vocal and instrumental Carnatic performances. Proceeds went directly to support the Sri Karpaga Ganapathi Temple.
 flyerImage: /assets/events/eka/flyer.png
 gallery:
   - src: /assets/events/eka/gallery/IMG_0622.JPG
@@ -44,6 +41,6 @@ gallery:
     alt: Eka Concert Image
 videos:
   - title: Eka performance by Student Artists
-    videoUrl: https://www.youtube.com/watch?v=F1VUwJJcerk
     source: youtube
+    videoUrl: https://www.youtube.com/watch?v=F1VUwJJcerk
 ---
