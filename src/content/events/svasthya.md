@@ -1,6 +1,6 @@
 ---
 title: Svāsthya
-order: 1
+order: 2
 status: past
 subtitle: Harmony in Sound, Healing in Purpose
 date: August 29, 2026
