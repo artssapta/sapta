@@ -1,5 +1,5 @@
 {
-  "/assets/eka_flyer.png": {
+  "/assets/events/eka/flyer.png": {
     "width": 1084,
     "height": 1402,
     "widths": [
@@ -8,16 +8,7 @@
       1084
     ]
   },
-  "/assets/flyer_image.png": {
-    "width": 1084,
-    "height": 1402,
-    "widths": [
-      480,
-      960,
-      1084
-    ]
-  },
-  "/assets/folderImages_eka/IMG_0622.JPG": {
+  "/assets/events/eka/gallery/IMG_0622.JPG": {
     "width": 4032,
     "height": 3024,
     "widths": [
@@ -26,7 +17,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_0625.JPG": {
+  "/assets/events/eka/gallery/IMG_0625.JPG": {
     "width": 4032,
     "height": 3024,
     "widths": [
@@ -35,7 +26,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_0635.JPG": {
+  "/assets/events/eka/gallery/IMG_0635.JPG": {
     "width": 4032,
     "height": 3024,
     "widths": [
@@ -44,7 +35,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_0658.JPG": {
+  "/assets/events/eka/gallery/IMG_0658.JPG": {
     "width": 4032,
     "height": 3024,
     "widths": [
@@ -53,7 +44,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_0688.JPG": {
+  "/assets/events/eka/gallery/IMG_0688.JPG": {
     "width": 3520,
     "height": 1980,
     "widths": [
@@ -62,7 +53,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_3859.JPG": {
+  "/assets/events/eka/gallery/IMG_3859.JPG": {
     "width": 4284,
     "height": 5712,
     "widths": [
@@ -71,7 +62,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_3901.JPG": {
+  "/assets/events/eka/gallery/IMG_3901.JPG": {
     "width": 3520,
     "height": 1980,
     "widths": [
@@ -80,7 +71,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_3913.JPG": {
+  "/assets/events/eka/gallery/IMG_3913.JPG": {
     "width": 3520,
     "height": 1980,
     "widths": [
@@ -89,7 +80,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_3933.JPG": {
+  "/assets/events/eka/gallery/IMG_3933.JPG": {
     "width": 5712,
     "height": 4284,
     "widths": [
@@ -98,7 +89,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_4706.jpeg": {
+  "/assets/events/eka/gallery/IMG_4706.jpeg": {
     "width": 3420,
     "height": 2422,
     "widths": [
@@ -107,7 +98,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_5182.JPG": {
+  "/assets/events/eka/gallery/IMG_5182.JPG": {
     "width": 3520,
     "height": 1980,
     "widths": [
@@ -116,7 +107,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_5220.JPG": {
+  "/assets/events/eka/gallery/IMG_5220.JPG": {
     "width": 4032,
     "height": 3024,
     "widths": [
@@ -125,7 +116,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_5229.JPG": {
+  "/assets/events/eka/gallery/IMG_5229.JPG": {
     "width": 4032,
     "height": 3024,
     "widths": [
@@ -134,7 +125,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_5232.JPG": {
+  "/assets/events/eka/gallery/IMG_5232.JPG": {
     "width": 4032,
     "height": 3024,
     "widths": [
@@ -143,7 +134,7 @@
       1600
     ]
   },
-  "/assets/folderImages_eka/IMG_5233.JPG": {
+  "/assets/events/eka/gallery/IMG_5233.JPG": {
     "width": 5712,
     "height": 4284,
     "widths": [
@@ -152,7 +143,7 @@
       1600
     ]
   },
-  "/assets/go_rakshana_flyer.jpg": {
+  "/assets/events/go-rakshana/flyer.jpg": {
     "width": 790,
     "height": 1024,
     "widths": [
@@ -160,7 +151,15 @@
       790
     ]
   },
-  "/assets/hero_music_banner.png": {
+  "/assets/events/svasthya/flyer.png": {
+    "width": 512,
+    "height": 674,
+    "widths": [
+      480,
+      512
+    ]
+  },
+  "/assets/hero-banner.png": {
     "width": 1024,
     "height": 1024,
     "widths": [
@@ -169,47 +168,7 @@
       1024
     ]
   },
-  "/assets/image_17faba.png": {
-    "width": 928,
-    "height": 812,
-    "widths": [
-      480,
-      928
-    ]
-  },
-  "/assets/image_17fad8.png": {
-    "width": 928,
-    "height": 832,
-    "widths": [
-      480,
-      928
-    ]
-  },
-  "/assets/image_186815.png": {
-    "width": 928,
-    "height": 1054,
-    "widths": [
-      480,
-      928
-    ]
-  },
-  "/assets/image_186aba.png": {
-    "width": 730,
-    "height": 1062,
-    "widths": [
-      480,
-      730
-    ]
-  },
-  "/assets/image_186af6.png": {
-    "width": 928,
-    "height": 800,
-    "widths": [
-      480,
-      928
-    ]
-  },
-  "/assets/image_186b79.png": {
+  "/assets/logo.png": {
     "width": 894,
     "height": 838,
     "widths": [
@@ -217,12 +176,44 @@
       894
     ]
   },
-  "/assets/svasthya_flyer.png": {
-    "width": 512,
-    "height": 674,
+  "/assets/team/ananya-aiyer.png": {
+    "width": 928,
+    "height": 800,
     "widths": [
       480,
-      512
+      928
+    ]
+  },
+  "/assets/team/anusha-naveen.png": {
+    "width": 928,
+    "height": 812,
+    "widths": [
+      480,
+      928
+    ]
+  },
+  "/assets/team/krishnabandhu-srivathsa.png": {
+    "width": 928,
+    "height": 832,
+    "widths": [
+      480,
+      928
+    ]
+  },
+  "/assets/team/shravya-rengan.png": {
+    "width": 730,
+    "height": 1062,
+    "widths": [
+      480,
+      730
+    ]
+  },
+  "/assets/team/upasana-arun.png": {
+    "width": 928,
+    "height": 1054,
+    "widths": [
+      480,
+      928
     ]
   }
 }

@@ -15,3 +15,6 @@ dist/
 # Local Worker secrets
 .dev.vars
 .wrangler/
+
+# Claude Code
+.claude/

@@ -23,7 +23,7 @@ const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const site = 'https://saptaarts.org';
 const pageUrl = new URL(Astro.url.pathname, site).href;
 const shareImage = image ? new URL(image, site).href : `${site}/og-image.jpg`;
-const logo = optimizedUrl('/assets/image_186b79.png', 480);
+const logo = optimizedUrl('/assets/logo.png', 480);
 
 const isActive = (href: string) => {
   if (href === '/') return path === '/';

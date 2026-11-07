@@ -10,7 +10,7 @@ description: Proceeds from this event went to support Shri Krishna Brundavan
   Gokulam (1125 Finley Rd, Pleasanton, CA). The concert featured beautiful
   Carnatic vocal and instrumental music by student artists, showcasing talent
   while nurturing our local community.
-flyerImage: /assets/go_rakshana_flyer.jpg
+flyerImage: /assets/events/go-rakshana/flyer.jpg
 gallery:
   - src: https://res.cloudinary.com/dkudoatww/image/upload/v1782263309/IMG_8769_zuqazu.jpg
     alt: Go-Rakshana Event Image
