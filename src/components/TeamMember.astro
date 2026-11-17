@@ -1,4 +1,5 @@
 ---
+// KEEP IN SYNC with admin/core/render-preview.mjs (renderHomeMain).
 import { responsiveImage } from '../lib/images.mjs';
 const { name, role, description, image } = Astro.props;
 const photo = responsiveImage(image, { sizes: '(max-width: 600px) 96px, 180px' });

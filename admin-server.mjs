@@ -40,8 +40,8 @@ async function fileResponse(baseDir, urlPath) {
 }
 
 /** Builds the Node HTTP server around the shared app. Exported for tests. */
-export function createAdminServer({ env = process.env, port = 4322, fetchImpl = fetch, rootDir = ROOT, role = 'admin', previewOrigin = '', previewSecret = '' } = {}) {
-  const config = readConfig(env, { store: 'fs', publicUrl: `http://localhost:${port}`, siteUrl: '', role, previewOrigin, previewSecret });
+export function createAdminServer({ env = process.env, port = 4322, fetchImpl = fetch, rootDir = ROOT, role = 'admin', previewOrigin = '', previewSecret = '', adminOrigin = '' } = {}) {
+  const config = readConfig(env, { store: 'fs', publicUrl: `http://localhost:${port}`, siteUrl: '', role, previewOrigin, previewSecret, adminOrigin });
   const preview = createPreviewTrigger(config.previewDeployHook, { fetchImpl });
   const store = config.store === 'github'
     ? createGitHubStore(config.github, { fetchImpl, onDraftsChanged: preview.markChanged })
@@ -98,7 +98,7 @@ if (isMain) {
   let previewServer;
   try {
     server = createAdminServer({ port, previewOrigin, previewSecret });
-    previewServer = createAdminServer({ port: previewPort, role: 'preview', previewSecret });
+    previewServer = createAdminServer({ port: previewPort, role: 'preview', previewSecret, adminOrigin: `http://localhost:${port}` });
   } catch (err) {
     if (!(err instanceof ConfigError)) throw err;
     console.error(`\n✖ The admin is not configured:\n  ${err.message.split('\n').join('\n  ')}\n\nSee README → "Hosted admin".\n`);

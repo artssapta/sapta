@@ -9,9 +9,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { renderEventsSection, renderRegistrationSection, normalizeHtml } from '../admin/core/render-preview.mjs';
+import { renderEventsSection, renderRegistrationSection, renderHomeMain, normalizeHtml } from '../admin/core/render-preview.mjs';
 import { formEmbedUrl, resolveFormEmbed } from '../src/lib/media.mjs';
-import { eventFromFile, registrationFromFile } from '../admin/core/content.mjs';
+import { eventFromFile, registrationFromFile, teamFromFile, parseFrontmatter } from '../admin/core/content.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const builds = {};
@@ -28,8 +28,13 @@ function built(variant, page) {
       root = fs.mkdtempSync(path.join(os.tmpdir(), 'sapta-parity-src-'));
       for (const entry of ['src', 'astro.config.mjs', 'package.json']) fs.cpSync(path.join(ROOT, entry), path.join(root, entry), { recursive: true });
       for (const entry of ['public', 'node_modules']) fs.symlinkSync(path.join(ROOT, entry), path.join(root, entry));
-      for (const [id, data] of Object.entries(variant === 'open' ? OPEN_REGISTRATIONS : SOON_REGISTRATIONS)) {
-        fs.writeFileSync(path.join(root, 'src/content/registrations', `${id}.md`), `---\n${Object.entries(data).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n')}\n---\n`);
+      if (variant === 'home') {
+        fs.writeFileSync(path.join(root, 'src/content/pages/home.md'), EDITED_HOME);
+        fs.writeFileSync(path.join(root, 'src/content/team/zz-new.md'), NEW_MEMBER);
+      } else {
+        for (const [id, data] of Object.entries(variant === 'open' ? OPEN_REGISTRATIONS : SOON_REGISTRATIONS)) {
+          fs.writeFileSync(path.join(root, 'src/content/registrations', `${id}.md`), `---\n${Object.entries(data).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join('\n')}\n---\n`);
+        }
       }
     }
     const out = fs.mkdtempSync(path.join(os.tmpdir(), 'sapta-parity-'));
@@ -51,6 +56,63 @@ const OPEN_REGISTRATIONS = {
   group: { title: 'Group Registration', status: 'open', message: "We're preparing the next round.", openMessage: 'Sign up your group below!', url: 'https://docs.google.com/forms/d/e/1FAIpQLScgKqjFdibHT11I5htoLphuKNhGikKiIOyrpeQwuGSD2ul0mw/viewform?usp=header' },
   spotlight: { title: 'SAPTA Spotlight', status: 'open', message: 'Coming soon.', url: 'https://example.org/spotlight-form' },
 };
+
+// Homepage edits the admin can make: an uploaded banner, no subtitle, picture
+// on the left, a new member with no role and an uploaded photo.
+const EDITED_HOME = `---
+title: Home
+blocks:
+  - type: hero
+    title: "SAPTA & Friends"
+    color: "#6091B0"
+    showDonate: true
+    image: https://res.cloudinary.com/dkudoatww/image/upload/v1/sapta/folders/Homepage/banner.jpg
+  - type: about
+    title: "Who we are"
+    text: "Line one. It's <ours>."
+    image: https://res.cloudinary.com/dkudoatww/image/upload/v1/sapta/folders/Homepage/about.png
+    imageSide: left
+  - type: team-grid
+---
+`;
+const NEW_MEMBER = '---\nname: "Zed O\'Neil"\nrole: ""\nphoto: https://res.cloudinary.com/dkudoatww/image/upload/v1/sapta/folders/Homepage/zed.jpg\norder: 3\n---\n\nNew & keen.\n';
+
+/** Inside <main>, plus each homepage component's scoped-style attribute. */
+function homeMain(html) {
+  const open = html.match(/<main[^>]*>/);
+  const inner = html.slice(open.index + open[0].length, html.indexOf('</main>'));
+  const cid = re => inner.match(re)?.[1];
+  return {
+    inner,
+    cids: {
+      hero: cid(/class="hero"[^>]*?(data-astro-cid-[a-z0-9]+)/),
+      about: cid(/class="about-section"[^>]*?(data-astro-cid-[a-z0-9]+)/),
+      team: cid(/class="team-container"[^>]*?(data-astro-cid-[a-z0-9]+)/),
+      member: cid(/class="team-row[^"]*"[^>]*?(data-astro-cid-[a-z0-9]+)/),
+    },
+  };
+}
+
+function teamFrom(dir, extra = []) {
+  return [...fs.readdirSync(dir).filter(f => f.endsWith('.md')).map(f => teamFromFile(f.slice(0, -3), fs.readFileSync(path.join(dir, f), 'utf-8'))), ...extra];
+}
+
+test('instant preview renders the homepage exactly like the site (current content)', { timeout: 120_000 }, () => {
+  const { inner, cids } = homeMain(built('real', ''));
+  const blocks = parseFrontmatter(fs.readFileSync(path.join(contentDir('pages'), 'home.md'), 'utf-8')).data.blocks;
+  assert.equal(normalizeHtml(renderHomeMain(blocks, teamFrom(contentDir('team')), cids)), normalizeHtml(inner));
+});
+
+test('instant preview renders the homepage exactly like the site (after admin edits)', { timeout: 120_000 }, () => {
+  const html = built('home', '');
+  const { inner, cids } = homeMain(html);
+  assert.match(inner, /background-image: url\(https:\/\/res\.cloudinary\.com\/dkudoatww\/image\/upload\/f_auto,q_auto,c_limit,w_1600\/v1\/sapta\/folders\/Homepage\/banner\.jpg\)/);
+  assert.match(inner, /about-grid image-left/);
+  assert.doesNotMatch(inner, /hero-subtitle/);
+  const blocks = parseFrontmatter(EDITED_HOME).data.blocks;
+  const team = teamFrom(contentDir('team'), [teamFromFile('zz-new', NEW_MEMBER)]);
+  assert.equal(normalizeHtml(renderHomeMain(blocks, team, cids)), normalizeHtml(inner));
+});
 
 /** The first <section class="…"> … </section> and its scoped-style attribute. */
 function section(html, className) {

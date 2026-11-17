@@ -175,3 +175,97 @@ export function registrationFromFile(id, text) {
     url: String(data.url ?? ''),
   };
 }
+
+// ---------- homepage and team ----------
+
+export const HOME_PATH = 'src/content/pages/home.md';
+export const TEAM_DIR = 'src/content/team';
+export const HOME_SECTIONS = ['hero', 'about', 'team'];
+
+export const teamPath = id => {
+  if (!SLUG_RE.test(String(id))) throw new ValidationError('Invalid team member.');
+  return `${TEAM_DIR}/${id}.md`;
+};
+
+const blockOf = (data, type) => (Array.isArray(data.blocks) ? data.blocks : []).find(b => b && b.type === type);
+
+/** The editable parts of home.md. */
+export function homeFromFile(raw) {
+  const { data } = parseFrontmatter(raw);
+  const hero = blockOf(data, 'hero') || {};
+  const about = blockOf(data, 'about') || {};
+  const team = blockOf(data, 'team-grid') || {};
+  return {
+    hero: { title: String(hero.title ?? ''), subtitle: String(hero.subtitle ?? ''), image: String(hero.image ?? '') },
+    about: { title: String(about.title ?? ''), text: String(about.text ?? ''), image: String(about.image ?? ''), imageSide: about.imageSide === 'left' ? 'left' : 'right' },
+    team: { title: String(team.title ?? '') },
+    hasHero: Boolean(blockOf(data, 'hero')),
+    hasAbout: Boolean(blockOf(data, 'about')),
+    hasTeam: Boolean(blockOf(data, 'team-grid')),
+  };
+}
+
+/**
+ * Applies one section's edits to home.md and returns the new file. Everything
+ * else in the file (other sections, colours, buttons) is kept as it is.
+ */
+export function applyHomeEdit(raw, section, fields, { cloudName }) {
+  if (!HOME_SECTIONS.includes(section)) throw new ValidationError('Unknown homepage section.');
+  if (!fields || typeof fields !== 'object') throw new ValidationError('Invalid request body.');
+  const { data } = parseFrontmatter(raw);
+  const type = section === 'team' ? 'team-grid' : section;
+  const block = blockOf(data, type);
+  if (!block) throw new ValidationError(`The homepage has no ${section} section.`, 404);
+
+  if (section === 'hero') {
+    block.title = text(fields.title, { field: 'Banner title', max: 100, required: true });
+    const subtitle = text(fields.subtitle, { field: 'Banner subtitle', max: 300 });
+    if (subtitle) block.subtitle = subtitle; else delete block.subtitle;
+    const image = text(fields.image, { field: 'Banner picture', max: 2048 });
+    if (image) block.image = validateMediaPath(image, { field: 'Banner picture', cloudName }); else delete block.image;
+  } else if (section === 'about') {
+    block.title = text(fields.title, { field: 'About heading', max: 200, required: true });
+    block.text = text(fields.text, { field: 'About text', max: 5000, required: true });
+    block.image = validateMediaPath(text(fields.image, { field: 'About picture', max: 2048, required: true }), { field: 'About picture', cloudName });
+    if (!['left', 'right'].includes(fields.imageSide)) throw new ValidationError('Picture side must be left or right.');
+    block.imageSide = fields.imageSide;
+  } else {
+    const title = text(fields.title, { field: 'Team heading', max: 200 });
+    if (title) block.title = title; else delete block.title;
+  }
+  return stringifyFrontmatter(data);
+}
+
+export function teamFromFile(id, raw) {
+  const { data, body } = parseFrontmatter(raw);
+  return {
+    id,
+    name: String(data.name ?? id),
+    role: String(data.role ?? ''),
+    photo: String(data.photo ?? ''),
+    order: Number(data.order) || 99,
+    bio: body,
+  };
+}
+
+/** A team member file: name, role, photo and order up top, the bio as the body. */
+export function validateTeamMember(body, { cloudName, order }) {
+  if (!body || typeof body !== 'object') throw new ValidationError('Invalid request body.');
+  const data = {
+    name: text(body.name, { field: 'Name', max: 100, required: true }),
+    role: text(body.role, { field: 'Role', max: 100 }),
+    photo: validateMediaPath(text(body.photo, { field: 'Photo', max: 2048, required: true }), { field: 'Photo', cloudName }),
+    order,
+  };
+  const bio = text(body.bio, { field: 'Bio', max: 3000 });
+  return { data, bio };
+}
+
+/** A file name for a new team member, e.g. "Priya Raman" → "priya-raman". */
+export function teamIdFor(name, taken) {
+  const base = String(name).normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50).replace(/-+$/, '') || 'member';
+  let id = base;
+  for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
+  return id;
+}

@@ -63,6 +63,12 @@ export function readConfig(env, defaults = {}) {
   const previewSecret = env.PREVIEW_SECRET || defaults.previewSecret || '';
   if ((previewOrigin || role === 'preview') && previewSecret.length < 32) problems.push('PREVIEW_SECRET is required (at least 32 random characters) for separate previews.');
   if (previewOrigin && previewOrigin === origin) problems.push('PREVIEW_ORIGIN must differ from the admin address.');
+  // The preview server lets only the admin show its pages inside the
+  // homepage editor (ADMIN_ORIGIN; set on the preview server).
+  let adminOrigin = '';
+  if (env.ADMIN_ORIGIN || defaults.adminOrigin) {
+    try { adminOrigin = new URL(env.ADMIN_ORIGIN || defaults.adminOrigin).origin; } catch { problems.push('ADMIN_ORIGIN must be a full https:// address.'); }
+  }
 
   const github = {
     token: (env.GITHUB_TOKEN || '').trim(),
@@ -96,6 +102,7 @@ export function readConfig(env, defaults = {}) {
   return {
     role,
     previewOrigin,
+    adminOrigin,
     previewSecret,
     store,
     origin,
