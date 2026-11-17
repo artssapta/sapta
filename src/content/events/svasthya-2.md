@@ -1,7 +1,7 @@
 ---
 title: Svāsthya_2
 order: 1
-status: upcoming
+status: past
 subtitle: Harmony in Sound, Healing in Purpose
 date: November 15, @2026
 time: 10AM - 12PM
