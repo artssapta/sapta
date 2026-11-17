@@ -54,6 +54,8 @@ const pages = defineCollection({
         type: z.literal('hero'),
         title: z.string(),
         subtitle: z.string().optional(),
+        // Banner picture; the default banner is used when empty.
+        image: z.string().optional(),
         color: z.string().optional(),
         showDonate: z.boolean().optional(),
       }),

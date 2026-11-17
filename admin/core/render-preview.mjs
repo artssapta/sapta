@@ -8,8 +8,9 @@
 import { videoSource, registrationLink } from '../../src/lib/media.mjs';
 import { responsiveImage, optimizedUrl } from '../../src/lib/images.mjs';
 
-// Astro's text/attribute escaping.
+// Astro's escaping: text escapes & < > " ', attribute values only & and ".
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const escAttr = value => String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 
 /**
  * Minimal element builder that mirrors Astro's output: attributes in order,
@@ -20,7 +21,7 @@ function makeH(cid) {
   const scope = cid ? ` ${cid}` : '';
   const attrs = list => Object.entries(list)
     .filter(([, v]) => v !== null && v !== undefined && v !== false)
-    .map(([k, v]) => (v === true ? ` ${k}` : ` ${k}="${esc(v)}"`))
+    .map(([k, v]) => (v === true ? ` ${k}` : ` ${k}="${escAttr(v)}"`))
     .join('');
   const h = (tag, list = {}, ...children) => `<${tag}${attrs(list)}${scope}>${children.flat(Infinity).filter(c => c !== null && c !== undefined && c !== false).join('')}</${tag}>`;
   h.void = (tag, list = {}) => `<${tag}${attrs(list)}${scope}>`;
@@ -177,6 +178,66 @@ export function renderRegistrationSection({ title, status, message, openMessage,
     h('div', { class: 'links' },
       h('a', { href: '/events/' }, 'Explore our events ', h('span', { 'aria-hidden': 'true' }, '→')),
       h('a', { href: 'mailto:artssapta@gmail.com' }, 'Contact us')));
+}
+
+// ---------- homepage (Hero.astro, About.astro, TeamGrid.astro, TeamMember.astro) ----------
+
+export const DEFAULT_BANNER = '/assets/hero-banner.png';
+export const HOME_BLOCKS = ['hero', 'about', 'team-grid'];
+
+function heroBlock(h, { title, subtitle, image, color = '#316fa6', showDonate = false }) {
+  const bgImage = resolvePath(optimizedUrl(image || DEFAULT_BANNER));
+  return h('section', { class: 'hero', style: `background-image: url(${bgImage}); background-color: ${color};` },
+    h('div', { class: 'hero-overlay' }),
+    h('div', { class: 'hero-content reveal' },
+      h('h1', {}, h.text(title)),
+      subtitle && h('p', { class: 'hero-subtitle' }, h.text(subtitle)),
+      showDonate && h('div', { class: 'hero-cta' },
+        h('a', { href: '#donate', class: 'btn-hero-donate' }, 'Support Our Mission'),
+        h('a', { href: resolvePath('/events/'), class: 'btn-hero-events' }, 'View Events'))));
+}
+
+function aboutBlock(h, { title, text, image, imageSide = 'right' }) {
+  const pic = responsiveImage(image, { sizes: '(max-width: 768px) 320px, 480px' });
+  const picture = side => h('div', { class: `about-img reveal reveal-${side}` },
+    h.void('img', { src: resolvePath(pic.src), srcset: pic.srcset, sizes: pic.sizes, width: pic.width, height: pic.height, alt: title, loading: 'lazy', decoding: 'async' }));
+  return h('div', { class: 'about-section' },
+    h('div', { class: `about-grid ${imageSide === 'left' ? 'image-left' : 'image-right'}` },
+      imageSide === 'left' && picture('left'),
+      h('div', { class: 'about-text reveal reveal-right' },
+        title && h('h2', { class: 'section-title' }, h.text(title)),
+        h('p', {}, h.text(text))),
+      imageSide !== 'left' && picture('right')));
+}
+
+function teamBlock(h, hMember, { title }, team) {
+  const sorted = [...team].sort((a, b) => (a.order || 99) - (b.order || 99) || a.id.localeCompare(b.id));
+  return h('div', { class: 'team-container' },
+    title && h('h2', { class: 'section-title reveal' }, h.text(title)),
+    sorted.map(member => {
+      const photo = responsiveImage(member.photo, { sizes: '(max-width: 600px) 96px, 180px' });
+      return hMember('div', { class: 'team-row reveal' },
+        hMember('div', { class: 'team-img' },
+          hMember.void('img', { src: resolvePath(photo.src), srcset: photo.srcset, sizes: photo.sizes, width: photo.width, height: photo.height, alt: member.name, loading: 'lazy', decoding: 'async' })),
+        hMember('div', { class: 'team-info' },
+          hMember('h3', {}, h.text(member.name)),
+          member.role && hMember('p', { class: 'team-role' }, h.text(member.role)),
+          hMember('p', { class: 'team-desc' }, h.text(member.bio))));
+    }));
+}
+
+/**
+ * Everything inside the homepage's <main>, as src/pages/index.astro renders
+ * it from src/content/pages/home.md and the team files.
+ * `cids` holds each component's scoped-style attribute: { hero, about, team, member }.
+ */
+export function renderHomeMain(blocks, team, cids = {}) {
+  return blocks.map(block => {
+    if (block.type === 'hero') return heroBlock(makeH(cids.hero), block);
+    if (block.type === 'about') return aboutBlock(makeH(cids.about), block);
+    if (block.type === 'team-grid') return teamBlock(makeH(cids.team), makeH(cids.member), block, team);
+    throw new Error(`The homepage has a "${block.type}" section, which the instant preview cannot show yet.`);
+  }).join('');
 }
 
 /**

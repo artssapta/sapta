@@ -13,9 +13,10 @@ import { cloudinaryAsset } from '../public/shared/cloudinary-url.mjs';
 import {
   validateEvent, validateRegistration, eventFromFile, registrationFromFile, stringifyFrontmatter, normalizeSlug,
   eventPath, registrationPath, ValidationError, SLUG_RE, REGISTRATION_IDS, EVENTS_DIR, REGISTRATIONS_DIR,
+  HOME_PATH, TEAM_DIR, homeFromFile, applyHomeEdit, teamFromFile, validateTeamMember, teamIdFor, teamPath, parseFrontmatter,
 } from './content.mjs';
 import { StoreError } from './stores/errors.mjs';
-import { renderEventsSection, renderRegistrationSection } from './render-preview.mjs';
+import { renderEventsSection, renderRegistrationSection, renderHomeMain, DEFAULT_BANNER } from './render-preview.mjs';
 import { checkFormEmbed } from '../../src/lib/media.mjs';
 
 const MB = 1024 * 1024;
@@ -63,6 +64,8 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
     "connect-src 'self' https://api.cloudinary.com",
     "base-uri 'none'",
     `form-action 'self'${config.previewOrigin ? ` ${config.previewOrigin}` : ''}`,
+    // The homepage editor shows the page from the preview server.
+    ...(config.previewOrigin ? [`frame-src ${config.previewOrigin}`] : []),
     "frame-ancestors 'none'",
   ].join('; ');
 
@@ -192,6 +195,9 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
     if (ev) return { kind: 'event', id: ev[1] };
     const reg = path.match(/^src\/content\/registrations\/([a-z0-9-]+)\.md$/);
     if (reg) return { kind: 'registration', id: reg[1] };
+    if (path === HOME_PATH) return { kind: 'page', id: 'home' };
+    const member = path.match(/^src\/content\/team\/([a-z0-9-]+)\.md$/);
+    if (member) return { kind: 'team', id: member[1] };
     return { kind: 'other', id: path };
   }
 
@@ -224,8 +230,35 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       .sort((a, b) => a.order - b.order || a.slug.localeCompare(b.slug));
   }
 
-  /** Cloudinary public IDs referenced by any saved event, mapped to the event title. */
-  function usedAssets(events) {
+  async function readHome() {
+    const file = (await store.list('src/content/pages')).find(f => f.name === 'home.md');
+    if (!file) throw new HttpError(404, `The homepage file (${HOME_PATH}) is missing.`);
+    return file;
+  }
+
+  /** Team members in display order, with their file text (`raw`) and version. */
+  async function listTeam() {
+    return (await store.list(TEAM_DIR))
+      .filter(f => SLUG_RE.test(f.name.slice(0, -3)))
+      .map(f => ({ ...teamFromFile(f.name.slice(0, -3), f.text), version: f.version, raw: f.text }))
+      .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+  }
+
+  /** Pictures on the homepage, so the media library never deletes them. */
+  async function homepageImages() {
+    const [home, team] = await Promise.all([readHome().catch(() => null), listTeam()]);
+    const images = [];
+    if (home) {
+      const page = homeFromFile(home.text);
+      if (page.hero.image) images.push({ url: page.hero.image, usedIn: 'Homepage banner' });
+      if (page.about.image) images.push({ url: page.about.image, usedIn: 'Homepage (About)' });
+    }
+    for (const m of team) if (m.photo) images.push({ url: m.photo, usedIn: `Team: ${m.name}` });
+    return images;
+  }
+
+  /** Cloudinary public IDs used by any saved event or the homepage, mapped to where they are used. */
+  function usedAssets(events, siteImages = []) {
     const used = new Map();
     const note = (url, title) => {
       const asset = cloudinaryAsset(url, config.cloudinary.cloudName);
@@ -236,6 +269,7 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       for (const g of ev.gallery) note(g.src, ev.title);
       for (const v of ev.videos) if (v.source === 'upload') note(v.file, ev.title);
     }
+    for (const img of siteImages) note(img.url, img.usedIn);
     return used;
   }
 
@@ -253,13 +287,14 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
 
   async function collectMedia() {
     // The three sources are independent, so fetch them in parallel.
-    const [events, uploads, assetFiles, customFolders] = await Promise.all([
+    const [events, uploads, assetFiles, customFolders, siteImages] = await Promise.all([
       listEvents(),
       taggedUploads(),
       Promise.all(['public/assets', 'public/uploads'].map(dir => store.listFiles(dir))).then(lists => lists.flat()),
       config.cloudinary.ready ? listSubfolders(config.cloudinary, customRoot(), { fetchImpl }).catch(err => { console.warn(`[media] ${err.message}`); return []; }) : [],
+      homepageImages(),
     ]);
-    const used = usedAssets(events);
+    const used = usedAssets(events, siteImages);
     const media = new Map();
     // A file used by an event and stored in a folder is one item that shows up
     // in both: the event's folder and the folder it is stored in.
@@ -281,6 +316,8 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       for (const g of ev.gallery) add({ ...base, url: g.src, type: 'photo', source: sourceOf(g.src), title: g.alt || `${ev.title} photo` });
       for (const v of ev.videos) if (v.source === 'upload' && v.file) add({ ...base, url: v.file, type: 'video', source: sourceOf(v.file), title: v.title || `${ev.title} video` });
     }
+    // Homepage pictures on Cloudinary (site files are listed below as website files).
+    for (const img of siteImages) if (sourceOf(img.url) === 'cloudinary') add({ url: img.url, type: 'photo', source: 'cloudinary', title: img.usedIn, usedIn: img.usedIn, event: null });
     const folderPrefix = `${config.cloudinary.folder}/events/`;
     const customPrefix = `${customRoot()}/`;
     for (const r of uploads) {
@@ -292,7 +329,7 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
         url: r.url, type: r.type, source: 'cloudinary', title: r.title,
         event: folderSlug && folderSlug !== 'unsorted' ? folderSlug : null,
         customFolder: custom,
-        usedIn: usedBy || 'Not used in any event',
+        usedIn: usedBy || 'Not used on the website',
         deletable: Boolean(asset && !usedBy && isAdminUpload(asset)),
         movable: Boolean(asset),
       });
@@ -315,14 +352,15 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
   async function deleteUploads(urls, user) {
     if (!config.cloudinary.ready) throw new HttpError(503, 'Cloudinary is not set up.');
     if (!Array.isArray(urls) || !urls.length || urls.length > 50) throw new HttpError(400, 'Send between 1 and 50 files to delete.');
-    const used = usedAssets(await listEvents());
+    const [events, siteImages] = await Promise.all([listEvents(), homepageImages()]);
+    const used = usedAssets(events, siteImages);
     const byType = { image: [], video: [] };
     for (const url of urls) {
       const asset = cloudinaryAsset(String(url), config.cloudinary.cloudName);
       if (!asset) throw new HttpError(400, 'Only this site\'s Cloudinary files can be deleted.');
       if (!isAdminUpload(asset)) throw new HttpError(403, 'Only files uploaded through this admin can be deleted here.');
       const usedBy = used.get(`${asset.resourceType}:${asset.publicId}`);
-      if (usedBy) throw new HttpError(409, `This file is used in "${usedBy}". Remove it from that event and save, then delete it.`);
+      if (usedBy) throw new HttpError(409, `This file is used in "${usedBy}". Replace it there and save, then delete it.`);
       byType[asset.resourceType].push(asset.publicId);
     }
     const results = {};
@@ -359,12 +397,137 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
     const end = html.indexOf('</section>', start) + '</section>'.length;
     const old = html.slice(start, end);
     const fresh = render({ cid: old.match(/data-astro-cid-[a-z0-9]+/)?.[0], old });
-    const banner = '<div role="status" style="position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2147483647;'
-      + 'background:#92400e;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:10px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.25)">'
-      + 'PREVIEW — unpublished changes. This is not the live website.</div>';
+    return finishPreview(html, start, end, fresh);
+  }
+
+  /** Puts `fresh` in place of html[start:end], points links at the live site and adds the preview notice. */
+  function finishPreview(html, start, end, fresh, { notice = 'PREVIEW — unpublished changes. This is not the live website.', bodyEnd = '' } = {}) {
+    const banner = '<div role="status" id="sapta-preview-notice" style="position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:2147483647;'
+      + 'background:#92400e;color:#fff;font:600 14px/1.4 system-ui,sans-serif;padding:10px 18px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.25);pointer-events:none;max-width:calc(100% - 32px);text-align:center">'
+      + `${notice}</div>`;
     return (html.slice(0, start) + (sandboxedPreviews ? youtubeStills(fresh) : fresh) + html.slice(end))
       .replace(/<head[^>]*>/i, m => `${m}<base href="${templateOrigin}/">`)
-      .replace(/<\/body>/i, `${banner}</body>`);
+      .replace(/<\/body>/i, () => `${banner}${bodyEnd}</body>`);
+  }
+
+  /** The homepage built from the drafts: home.md plus the team files. */
+  async function previewHome({ edit = false, scrollY = 0 } = {}) {
+    const [html, home, team] = await Promise.all([sitePage('/'), readHome(), listTeam()]);
+    const blocks = parseFrontmatter(home.text).data.blocks || [];
+    const open = html.match(/<main[^>]*>/i);
+    if (!open) throw new HttpError(502, 'The website layout changed; the preview cannot find the page content.');
+    const start = open.index + open[0].length;
+    const end = html.indexOf('</main>', start);
+    const old = html.slice(start, end);
+    const cidOf = pattern => old.match(pattern)?.[1];
+    const cids = {
+      hero: cidOf(/class="hero"[^>]*?(data-astro-cid-[a-z0-9]+)/),
+      about: cidOf(/class="about-section"[^>]*?(data-astro-cid-[a-z0-9]+)/),
+      team: cidOf(/class="team-container"[^>]*?(data-astro-cid-[a-z0-9]+)/),
+      member: cidOf(/class="team-row[^"]*"[^>]*?(data-astro-cid-[a-z0-9]+)/),
+    };
+    let fresh;
+    try { fresh = renderHomeMain(blocks, team, cids); } catch (err) { throw new HttpError(422, err.message); }
+    if (!edit) return finishPreview(html, start, end, fresh);
+    const visible = [...team].sort((a, b) => (a.order || 99) - (b.order || 99) || a.id.localeCompare(b.id)).map(m => m.id);
+    return finishPreview(html, start, end, fresh, {
+      notice: 'Click any picture or text to change it',
+      bodyEnd: editorScript({ adminOrigin: config.adminOrigin, members: visible, scrollY }),
+    });
+  }
+
+  /**
+   * Runs inside the homepage editor's frame (preview server only): outlines
+   * what can be edited and tells the admin page what was clicked. It talks
+   * only to the admin's own address.
+   */
+  function editorScript(settings) {
+    const data = JSON.stringify(settings).replace(/</g, '\\u003c');
+    return `<style>
+      .reveal{opacity:1!important;transform:none!important;transition:none!important}
+      [data-sapta-edit]{cursor:pointer;outline:2px dashed transparent;outline-offset:3px;transition:outline-color .12s}
+      [data-sapta-edit].sapta-hover{outline-color:#f59e0b}
+      [data-sapta-edit].sapta-selected{outline:3px solid #f59e0b}
+      .hero[data-sapta-edit]{outline-offset:-8px}
+      #sapta-chip{position:fixed;z-index:2147483646;background:#f59e0b;color:#1f2937;font:600 12px/1 system-ui,sans-serif;padding:6px 9px;border-radius:6px;pointer-events:none;display:none;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+    </style><div id="sapta-chip"></div><script>(() => {
+      const S = ${data};
+      history.scrollRestoration = 'manual';
+      const main = document.querySelector('main');
+      const chip = document.getElementById('sapta-chip');
+      const mark = (el, field, label) => { if (el) { el.dataset.saptaEdit = field; el.dataset.saptaLabel = label; } };
+      mark(main.querySelector('.hero'), 'hero.image', '🖼 Change banner picture');
+      mark(main.querySelector('.hero h1'), 'hero.title', '✎ Edit title');
+      mark(main.querySelector('.hero-subtitle'), 'hero.subtitle', '✎ Edit subtitle');
+      mark(main.querySelector('.about-text .section-title'), 'about.title', '✎ Edit heading');
+      mark(main.querySelector('.about-text p'), 'about.text', '✎ Edit text');
+      mark(main.querySelector('.about-img'), 'about.image', '🖼 Change picture');
+      mark(main.querySelector('.team-container > .section-title'), 'team.title', '✎ Edit heading');
+      main.querySelectorAll('.team-row').forEach((row, i) => {
+        const id = S.members[i];
+        if (!id) return;
+        mark(row.querySelector('.team-img'), 'member:' + id + ':photo', '🖼 Change photo');
+        mark(row.querySelector('h3'), 'member:' + id + ':name', '✎ Edit name');
+        mark(row.querySelector('.team-role'), 'member:' + id + ':role', '✎ Edit role');
+        mark(row.querySelector('.team-desc'), 'member:' + id + ':bio', '✎ Edit bio');
+      });
+      const find = field => [...document.querySelectorAll('[data-sapta-edit]')].find(el => el.dataset.saptaEdit === field);
+      const send = message => parent.postMessage(message, S.adminOrigin);
+      let hovered = null;
+      document.addEventListener('mouseover', e => {
+        const t = e.target.closest('[data-sapta-edit]');
+        if (t === hovered) return;
+        if (hovered) hovered.classList.remove('sapta-hover');
+        hovered = t;
+        if (!t) { chip.style.display = 'none'; return; }
+        t.classList.add('sapta-hover');
+        const r = t.getBoundingClientRect();
+        chip.textContent = t.dataset.saptaLabel;
+        chip.style.left = Math.max(8, r.left) + 'px';
+        chip.style.top = Math.max(8, r.top - 30) + 'px';
+        chip.style.display = 'block';
+      });
+      const select = el => {
+        document.querySelectorAll('.sapta-selected').forEach(x => x.classList.remove('sapta-selected'));
+        if (el) el.classList.add('sapta-selected');
+      };
+      document.addEventListener('click', e => {
+        const t = e.target.closest('[data-sapta-edit]');
+        const link = e.target.closest('a');
+        if (link) e.preventDefault(); // stay on this page while editing
+        if (!t) return;
+        e.preventDefault();
+        e.stopPropagation();
+        select(t);
+        send({ type: 'sapta-edit', field: t.dataset.saptaEdit });
+      }, true);
+      const safeImage = v => typeof v === 'string' && /^(https:\\/\\/res\\.cloudinary\\.com\\/|https:\\/\\/[a-z0-9.-]+\\/|\\/(?!\\/))/i.test(v) && !/["'()\\\\\\s<>]/.test(v);
+      window.addEventListener('message', e => {
+        if (e.origin !== S.adminOrigin || !e.data || typeof e.data !== 'object') return;
+        const { type, field, value } = e.data;
+        const el = typeof field === 'string' ? find(field) : null;
+        if (type === 'sapta-select') {
+          select(el);
+          if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        } else if (type === 'sapta-set' && el && typeof value === 'string') {
+          if (/(\\.image|:photo)$/.test(field)) {
+            if (!safeImage(value)) return;
+            if (field === 'hero.image') el.style.backgroundImage = 'url(' + value + ')';
+            else { const img = el.querySelector('img'); if (img) { img.removeAttribute('srcset'); img.src = value; } }
+          } else {
+            el.textContent = value;
+          }
+        }
+      });
+      let timer = null;
+      addEventListener('scroll', () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => send({ type: 'sapta-scroll', y: Math.round(scrollY) }), 150);
+      }, { passive: true });
+      const restore = () => scrollTo(0, S.scrollY || 0);
+      if (document.readyState === 'complete') restore(); else addEventListener('load', restore);
+      send({ type: 'sapta-ready' });
+    })();</script>`;
   }
 
   /**
@@ -383,7 +546,7 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
     });
   }
 
-  function previewResponse(html, status = 200) {
+  function previewResponse(html, status = 200, { frameAncestor = '' } = {}) {
     const headers = secureHeaders(new Headers({
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-store',
@@ -393,8 +556,10 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       // no login to protect, so the page runs normally (YouTube, forms).
       'Content-Security-Policy': sandboxedPreviews
         ? "sandbox allow-scripts allow-popups allow-popups-to-escape-sandbox; frame-ancestors 'none'"
-        : "frame-ancestors 'none'",
+        : `frame-ancestors ${frameAncestor || "'none'"}`,
     }));
+    // The homepage editor (on the admin's address) shows this page in a frame.
+    if (frameAncestor) headers.delete('X-Frame-Options');
     return new Response(html, { status, headers });
   }
 
@@ -436,6 +601,13 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
         title: old.match(/<h1[^>]*>([^<]*)<\/h1>/)?.[1]?.replace(/&#39;/g, "'").replace(/&amp;/g, '&') || 'Events',
         color: old.match(/background-color: ([^;"]+);/)?.[1] || '#316fa6',
       })));
+    }
+
+    if (url.pathname === '/preview/home') {
+      const edit = !isPost && url.searchParams.get('edit') === '1';
+      if (edit && !(config.role === 'preview' && config.adminOrigin)) throw new HttpError(400, 'The homepage editor needs the separate preview server (ADMIN_ORIGIN is not set).');
+      const scrollY = Math.max(0, Math.min(100_000, Number(url.searchParams.get('y')) || 0));
+      return previewResponse(await previewHome({ edit, scrollY }), 200, { frameAncestor: edit ? config.adminOrigin : '' });
     }
 
     const reg = url.pathname.match(/^\/preview\/registration\/([a-z]+)$/);
@@ -625,7 +797,10 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       if (body.all === true) {
         await store.discard(null, '');
       } else {
-        const path = body.kind === 'event' ? eventPath(normalizeSlug(body.id)) : body.kind === 'registration' ? registrationPath(String(body.id)) : null;
+        const path = body.kind === 'event' ? eventPath(normalizeSlug(body.id))
+          : body.kind === 'registration' ? registrationPath(String(body.id))
+            : body.kind === 'page' && body.id === 'home' ? HOME_PATH
+              : body.kind === 'team' ? teamPath(String(body.id)) : null;
         if (!path) throw new HttpError(400, 'Say which draft to discard.');
         await store.discard(path, commitMessage(`discard draft of ${body.kind} "${body.id}"`, user));
       }
@@ -654,6 +829,75 @@ export function createApp({ config, store, assets, fetchImpl = fetch }) {
       // Tell the editor whether visitors will see the form embedded or a button.
       const check = fields.url ? await checkFormEmbed(fields.url, { fetchImpl }) : { embed: null, reason: 'not-supported' };
       return json(200, { ok: true, version, embedded: Boolean(check.embed), embedReason: check.reason, signIn: Boolean(check.signIn), publishes: store.publishes, drafts: Boolean(store.drafts) });
+    }
+
+    // ---------- homepage ----------
+
+    if (pathname === '/api/homepage' && request.method === 'GET') {
+      const [home, team] = await Promise.all([readHome(), listTeam()]);
+      return json(200, {
+        page: { ...homeFromFile(home.text), version: home.version },
+        team: team.map(({ raw, ...m }) => m),
+        defaultBanner: DEFAULT_BANNER,
+      });
+    }
+
+    if (pathname === '/api/homepage' && request.method === 'POST') {
+      const body = await readJson(request);
+      const home = await readHome();
+      const section = String(body.section || '');
+      const text = applyHomeEdit(home.text, section, body.fields, { cloudName: config.cloudinary.cloudName || '-' });
+      const name = { hero: 'banner', about: 'About section', team: 'team heading' }[section];
+      const version = await store.update(HOME_PATH, text, String(body.version || ''), commitMessage(`update homepage ${name}`, user));
+      mediaCache.at = 0;
+      return json(200, { ok: true, version, publishes: store.publishes, drafts: Boolean(store.drafts) });
+    }
+
+    if (pathname === '/api/team' && request.method === 'POST') {
+      const body = await readJson(request);
+      const team = await listTeam();
+      if (team.length >= 50) throw new HttpError(400, 'The team list is full (50 people).');
+      const order = Math.max(0, ...team.map(m => m.order)) + 1;
+      const { data, bio } = validateTeamMember(body, { cloudName: config.cloudinary.cloudName || '-', order });
+      const id = teamIdFor(data.name, new Set(team.map(m => m.id)));
+      const version = await store.create(teamPath(id), stringifyFrontmatter(data, bio), commitMessage(`add team member "${data.name}"`, user));
+      return json(200, { ok: true, id, version });
+    }
+
+    if (pathname === '/api/team/order' && request.method === 'POST') {
+      const body = await readJson(request);
+      const wanted = Array.isArray(body.members) ? body.members : [];
+      const team = await listTeam();
+      const byId = new Map(team.map(m => [m.id, m]));
+      if (wanted.length !== team.length || wanted.some(w => !byId.has(String(w?.id))) || new Set(wanted.map(w => w.id)).size !== wanted.length) {
+        throw new HttpError(409, 'The team list changed in the meantime. Reload the page and try again.');
+      }
+      if (wanted.some(w => byId.get(w.id).version !== w.version)) throw new HttpError(409, 'Someone else changed the team in the meantime. Reload the page and try again.');
+      const versions = {};
+      for (const [index, w] of wanted.entries()) {
+        const member = byId.get(w.id);
+        if (member.order === index + 1) { versions[w.id] = member.version; continue; }
+        const { data, body: bio } = parseFrontmatter(member.raw);
+        versions[w.id] = await store.update(teamPath(w.id), stringifyFrontmatter({ ...data, order: index + 1 }, bio), member.version, commitMessage(`move ${member.name} to position ${index + 1}`, user));
+      }
+      return json(200, { ok: true, versions });
+    }
+
+    const teamMatch = pathname.match(/^\/api\/team\/([a-z0-9-]+)$/);
+    if (teamMatch && ['POST', 'DELETE'].includes(request.method)) {
+      const id = teamMatch[1];
+      const path = teamPath(id);
+      const member = (await listTeam()).find(m => m.id === id);
+      if (!member) throw new HttpError(404, 'This team member no longer exists. Reload the page.');
+      if (request.method === 'DELETE') {
+        await store.remove(path, url.searchParams.get('version') || '', commitMessage(`remove team member "${member.name}"`, user));
+        return json(200, { ok: true });
+      }
+      const body = await readJson(request);
+      const { data, bio } = validateTeamMember(body, { cloudName: config.cloudinary.cloudName || '-', order: member.order });
+      const version = await store.update(path, stringifyFrontmatter(data, bio), String(body.version || ''), commitMessage(`update team member "${data.name}"`, user));
+      mediaCache.at = 0;
+      return json(200, { ok: true, version });
     }
 
     if (pathname === '/api/media' && request.method === 'GET') {

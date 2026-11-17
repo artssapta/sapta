@@ -502,6 +502,41 @@
       color: #fff;
     }
 
+    /* Homepage editor */
+    .home-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+    .seg { display: inline-flex; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden; }
+    .seg button { border: 0; background: #fff; padding: 7px 14px; font: 500 13px 'Inter', sans-serif; color: #475569; cursor: pointer; }
+    .seg button + button { border-left: 1px solid #cbd5e1; }
+    .seg button.active { background: var(--primary-light); color: var(--primary-dark); }
+    .home-editor { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 18px; align-items: start; }
+    .home-frame-wrap { position: relative; background: #e2e8f0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; height: calc(100vh - 150px); min-height: 560px; display: flex; justify-content: center; }
+    .home-frame-wrap iframe { border: 0; width: 100%; height: 100%; background: #fff; transition: width .2s; }
+    .home-frame-wrap.is-phone iframe { width: 390px; box-shadow: 0 0 0 1px #cbd5e1, 0 10px 30px rgba(0,0,0,.12); }
+    .home-frame-msg { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 30px; background: rgba(248,250,252,.92); color: var(--text-muted); font-size: 14px; }
+    .home-frame-msg[hidden] { display: none; }
+    .home-panel { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 18px; position: sticky; top: 12px; max-height: calc(100vh - 150px); overflow: auto; }
+    .home-panel h3 { font-family: 'Lora', serif; font-size: 19px; color: var(--primary-dark); margin-bottom: 4px; }
+    .home-panel .back { background: none; border: 0; color: var(--primary); font: 500 13px 'Inter', sans-serif; cursor: pointer; padding: 0; margin-bottom: 10px; }
+    .home-list { list-style: none; margin: 10px 0 18px; padding: 0; display: grid; gap: 6px; }
+    .home-list li { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-size: 13px; }
+    .home-list li img { width: 34px; height: 34px; object-fit: cover; border-radius: 50%; flex: none; background: #e2e8f0; }
+    .home-list li .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .home-list li .muted { color: var(--text-muted); font-size: 12px; }
+    .icon-btn { border: 1px solid #cbd5e1; background: #fff; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; color: #475569; font-size: 13px; flex: none; }
+    .icon-btn:disabled { opacity: .35; cursor: default; }
+    .pic-field { display: grid; gap: 8px; }
+    .pic-field img { width: 100%; max-height: 170px; object-fit: contain; background: #f1f5f9; border: 1px solid var(--border); border-radius: 8px; }
+    .pic-field .row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .side-choice { display: flex; gap: 8px; }
+    .side-choice label { flex: 1; display: flex; gap: 6px; align-items: center; justify-content: center; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; font-weight: 500; cursor: pointer; margin: 0; }
+    .side-choice label:has(input:checked) { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
+    .panel-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    @media (max-width: 960px) {
+      .home-editor { grid-template-columns: 1fr; }
+      .home-panel { position: static; max-height: none; }
+      .home-frame-wrap { height: 70vh; }
+    }
+
     @media (max-width: 680px) {
       .form-grid { grid-template-columns: 1fr; }
       .form-span-2 { grid-column: span 1; }
@@ -567,6 +602,7 @@
 
       <nav class="tabs">
         <button class="tab-btn active" data-action="switchTab" data-arg="events">Events, Photos & Videos</button>
+        <button class="tab-btn" data-action="switchTab" data-arg="homepage">Homepage</button>
         <button class="tab-btn" data-action="switchTab" data-arg="media">Media Library & Cloudinary</button>
         <button class="tab-btn" data-action="switchTab" data-arg="registrations">Registrations</button>
         <button class="tab-btn" data-action="switchTab" data-arg="settings">Status</button>
@@ -585,6 +621,28 @@
         <div id="events-grid" class="grid-cards">
           <!-- Populated by JS -->
         </div>
+      </section>
+
+      <!-- Homepage Tab: the real homepage (from the drafts) with click-to-edit -->
+      <section id="tab-homepage" style="display:none;">
+        <div class="home-head">
+          <div>
+            <h2 style="font-family:'Lora',serif; font-size:24px; color:var(--primary-dark);">Homepage</h2>
+            <p style="color:var(--text-muted); font-size:14px;">Click any picture or text on the page to change it. Changes are saved as drafts until you publish.</p>
+          </div>
+          <div class="seg" role="group" aria-label="Page width">
+            <button type="button" class="active" data-action="homeViewport" data-arg="desktop">Computer</button>
+            <button type="button" data-action="homeViewport" data-arg="phone">Phone</button>
+          </div>
+        </div>
+        <div class="home-editor">
+          <div class="home-frame-wrap" id="home-frame-wrap">
+            <iframe id="home-frame" title="Homepage editor"></iframe>
+            <div class="home-frame-msg" id="home-frame-msg">Loading the homepage…</div>
+          </div>
+          <aside class="home-panel" id="home-panel" aria-live="polite"></aside>
+        </div>
+        <input type="file" id="home-file" accept="image/*" style="display:none;" data-change="uploadHomeImage">
       </section>
 
       <!-- Media Library Tab -->

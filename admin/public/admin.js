@@ -254,6 +254,7 @@ function showDashboard() {
   }
   loadEvents().then(offerRestore);
   loadRegistrations();
+  loadHomepage();
   refreshPreviewPass();
   // The media library and status checks are slower; load them when their tab is opened.
   state.mediaStale = true;
@@ -269,10 +270,11 @@ async function logout() {
 
 function switchTab(tabId, button) {
   document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.toggle('active', btn === button));
-  for (const id of ['events', 'media', 'registrations', 'settings', 'pagescms']) {
+  for (const id of ['events', 'homepage', 'media', 'registrations', 'settings', 'pagescms']) {
     document.getElementById('tab-' + id).style.display = id === tabId ? 'block' : 'none';
   }
   if (tabId === 'media') ensureMedia();
+  if (tabId === 'homepage') ensureHomepage();
   if (tabId === 'settings') loadStatus();
 }
 
@@ -989,14 +991,14 @@ async function handleQuickUpload(input) {
 
 async function openMediaPicker(target) {
   state.pickerTarget = target;
-  document.getElementById('picker-title').textContent = target === 'flyer' ? 'Select Event Flyer Image' : 'Select Photo for Gallery';
+  document.getElementById('picker-title').textContent = target === 'flyer' ? 'Select Event Flyer Image' : target === 'home' ? 'Choose a picture' : 'Select Photo for Gallery';
   document.getElementById('picker-grid').innerHTML = '<p class="help-text">Loading media…</p>';
   document.getElementById('modal-picker').style.display = 'flex';
   await ensureMedia();
   // Start in the folder of the event being edited, if it has anything.
-  const slug = document.getElementById('ev-slug').value.trim();
-  const own = `event:${slug}`;
-  state.pickerFolder = slug && state.allMedia.some(m => m.type !== 'video' && folderFilter(own)(m)) ? own : 'all';
+  const slug = target === 'home' ? '' : document.getElementById('ev-slug').value.trim();
+  const own = target === 'home' ? `custom:${HOME_FOLDER}` : `event:${slug}`;
+  state.pickerFolder = (slug || target === 'home') && state.allMedia.some(m => m.type !== 'video' && folderFilter(own)(m)) ? own : 'all';
   renderPicker();
 }
 
@@ -1031,12 +1033,379 @@ function selectPickerImage(index) {
     document.getElementById('ev-flyer').value = item.url;
     updateFlyerPreview(item.url);
     showToast('Flyer selected.');
+  } else if (state.pickerTarget === 'home') {
+    setHomePic(home.pickTarget, item.url);
+    showToast('Picture chosen. Click Save to keep it.');
   } else if (state.pickerTarget === 'gallery') {
     addGalleryRow(item.url, item.title);
     showToast('Photo added to gallery.');
   }
   closeMediaPicker();
 }
+
+// ---------- homepage ----------
+//
+// The Homepage tab shows the real homepage (built from the drafts by the
+// preview server) in a frame. Clicking a picture or text there opens it in
+// the panel beside it; typing updates the page as you go, and "Save draft"
+// stores it like any other draft.
+
+const HOME_FOLDER = 'Homepage'; // Cloudinary folder for homepage uploads
+const home = {
+  data: null,          // { page, team, defaultBanner } from /api/homepage
+  loaded: false,
+  view: 'overview',    // 'overview' | 'hero' | 'about' | 'team' | 'member:<id>' | 'member:new'
+  dirty: false,
+  selected: null,
+  scrollY: 0,
+  frameOpened: false,
+  pickTarget: null,    // which picture the media picker / upload fills
+  folderReady: false,
+};
+
+const memberById = id => home.data?.team.find(m => m.id === id);
+
+async function loadHomepage() {
+  try {
+    home.data = await api('/api/homepage');
+    home.loaded = true;
+  } catch (err) {
+    document.getElementById('home-panel').replaceChildren(el('p', { className: 'help-text', textContent: err.message }));
+    return;
+  }
+  if (home.view.startsWith('member:') && home.view !== 'member:new' && !memberById(home.view.slice(7))) home.view = 'overview';
+  if (!home.dirty) renderHomePanel();
+}
+
+function ensureHomepage() {
+  if (!home.loaded) loadHomepage();
+  if (!home.frameOpened) reloadHomeFrame();
+}
+
+async function reloadHomeFrame() {
+  const msg = document.getElementById('home-frame-msg');
+  const frame = document.getElementById('home-frame');
+  msg.hidden = false;
+  if (!state.previewOrigin) {
+    msg.textContent = 'The page view needs the preview server (PREVIEW_ORIGIN). You can still change everything with the panel.';
+    return;
+  }
+  msg.textContent = home.frameOpened ? 'Updating the page…' : 'Loading the homepage…';
+  if (!state.previewPass) await refreshPreviewPass();
+  if (!state.previewPass) {
+    msg.textContent = 'The page view could not be opened. Reload the admin page.';
+    return;
+  }
+  home.frameOpened = true;
+  frame.src = `${state.previewOrigin}/preview/home?edit=1&y=${Math.round(home.scrollY)}&token=${encodeURIComponent(state.previewPass)}`;
+}
+
+function toFrame(message) {
+  const target = document.getElementById('home-frame').contentWindow;
+  if (target && state.previewOrigin) target.postMessage(message, state.previewOrigin);
+}
+
+/** What the page frame shows for a picture while it is not saved yet. */
+function frameImage(url) {
+  return url.startsWith('https://res.cloudinary.com/') ? cloudinaryThumb(url, { width: 1600, crop: 'limit' }) : url;
+}
+
+function homeViewport(size, button) {
+  document.getElementById('home-frame-wrap').classList.toggle('is-phone', size === 'phone');
+  button.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === button));
+}
+
+function confirmLeave() {
+  return !home.dirty || confirm('You have changes here that are not saved. Throw them away?');
+}
+
+function openHomeView(view) {
+  if (view === home.view) return;
+  if (!confirmLeave()) return;
+  const wasDirty = home.dirty;
+  home.view = view;
+  home.dirty = false;
+  renderHomePanel();
+  if (wasDirty) reloadHomeFrame(); // undo unsaved live edits on the page
+}
+
+function homeBack() {
+  home.selected = null;
+  toFrame({ type: 'sapta-select', field: null });
+  openHomeView('overview');
+}
+
+/** Called when something on the page is clicked (or a field chosen here). */
+function openHomeField(field) {
+  const member = field.match(/^member:([a-z0-9-]+):(\w+)$/);
+  const [view, name] = member ? [`member:${member[1]}`, member[2]] : field.split('.');
+  if (!member && !['hero', 'about', 'team'].includes(view)) return;
+  if (member && !memberById(member[1])) return;
+  if (view !== home.view) {
+    if (!confirmLeave()) return;
+    const wasDirty = home.dirty;
+    home.view = view;
+    home.dirty = false;
+    renderHomePanel();
+    if (wasDirty) reloadHomeFrame();
+  }
+  home.selected = field;
+  const panel = document.getElementById('home-panel');
+  const pic = panel.querySelector(`[data-pic="${name}"]`);
+  const target = pic ? pic.querySelector('button') : panel.querySelector(`[name="${name}"]`);
+  target?.focus();
+  (pic || target)?.scrollIntoView({ block: 'nearest' });
+}
+
+function picField(name, live, label, value, { help = '', allowDefault = false } = {}) {
+  const shown = value || (allowDefault ? home.data.defaultBanner : '');
+  return `<div class="form-group pic-field" data-pic="${esc(name)}" data-live-field="${esc(live)}">
+      <label>${esc(label)}</label>
+      <img src="${esc(shown ? thumb(shown, { width: 640, height: 360, crop: 'limit' }) : PLACEHOLDER)}" alt="" data-fallback>
+      <input type="hidden" name="${esc(name)}" value="${esc(value)}">
+      <div class="row">
+        <button type="button" class="btn btn-cloudinary btn-sm" data-action="pickHomeFile" data-arg="${esc(name)}">Upload new picture</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-action="pickHomeFromLibrary" data-arg="${esc(name)}">Choose from library</button>
+        ${allowDefault && value ? `<button type="button" class="btn btn-secondary btn-sm" data-action="useDefaultBanner">Use the original banner</button>` : ''}
+      </div>
+      <div class="help-text" data-status>${esc(help)}</div>
+    </div>`;
+}
+
+const textField = (name, label, value, { live = '', max = 200, required = false, rows = 0, help = '' } = {}) => `
+    <div class="form-group">
+      <label for="home-${esc(name)}">${esc(label)}</label>
+      ${rows
+        ? `<textarea id="home-${esc(name)}" name="${esc(name)}" rows="${rows}" maxlength="${max}" ${required ? 'required' : ''} ${live ? `data-live="${esc(live)}"` : ''}>${esc(value)}</textarea>`
+        : `<input type="text" id="home-${esc(name)}" name="${esc(name)}" value="${esc(value)}" maxlength="${max}" ${required ? 'required' : ''} ${live ? `data-live="${esc(live)}"` : ''}>`}
+      ${help ? `<p class="help-text">${esc(help)}</p>` : ''}
+    </div>`;
+
+const formActions = (extra = '') => `
+    <div class="panel-actions">
+      <button type="submit" class="btn btn-primary">${state.drafts ? 'Save draft' : 'Save'}</button>
+      <button type="button" class="btn btn-secondary" data-action="homeBack">Cancel</button>
+      ${extra}
+    </div>`;
+
+function renderHomePanel() {
+  const panel = document.getElementById('home-panel');
+  if (!home.data) return;
+  const { page, team } = home.data;
+  const back = '<button type="button" class="back" data-action="homeBack">← All sections</button>';
+  const view = home.view;
+
+  if (view === 'hero') {
+    panel.innerHTML = `${back}<h3>Banner</h3><p class="help-text" style="margin-bottom:14px;">The big picture at the top of the homepage.</p>
+      <form data-submit="saveHomeSection" data-arg="hero">
+        ${textField('title', 'Title', page.hero.title, { live: 'hero.title', max: 100, required: true })}
+        ${textField('subtitle', 'Subtitle', page.hero.subtitle, { live: 'hero.subtitle', max: 300, help: 'Optional.' })}
+        ${picField('image', 'hero.image', 'Banner picture', page.hero.image, { allowDefault: true, help: 'A wide landscape photo works best (at least 1600 pixels wide). The text sits on top of it.' })}
+        ${formActions()}
+      </form>`;
+  } else if (view === 'about') {
+    panel.innerHTML = `${back}<h3>About</h3>
+      <form data-submit="saveHomeSection" data-arg="about">
+        ${textField('title', 'Heading', page.about.title, { live: 'about.title', required: true })}
+        ${textField('text', 'Text', page.about.text, { live: 'about.text', max: 5000, required: true, rows: 8 })}
+        ${picField('image', 'about.image', 'Picture', page.about.image)}
+        <div class="form-group">
+          <label>Picture position</label>
+          <div class="side-choice">
+            <label><input type="radio" name="imageSide" value="left" ${page.about.imageSide === 'left' ? 'checked' : ''}> Left of the text</label>
+            <label><input type="radio" name="imageSide" value="right" ${page.about.imageSide !== 'left' ? 'checked' : ''}> Right of the text</label>
+          </div>
+          <p class="help-text">The page shows the new position after you save.</p>
+        </div>
+        ${formActions()}
+      </form>`;
+  } else if (view === 'team') {
+    panel.innerHTML = `${back}<h3>Team heading</h3>
+      <form data-submit="saveHomeSection" data-arg="team">
+        ${textField('title', 'Heading', page.team.title, { live: 'team.title', help: 'Shown above the team. Leave empty for no heading.' })}
+        ${formActions()}
+      </form>`;
+  } else if (view.startsWith('member:')) {
+    const isNew = view === 'member:new';
+    const m = isNew ? { id: 'new', name: '', role: 'Member', bio: '', photo: '' } : memberById(view.slice(7));
+    const live = field => (isNew ? '' : `member:${m.id}:${field}`);
+    panel.innerHTML = `${back}<h3>${isNew ? 'Add a team member' : esc(m.name)}</h3>
+      ${isNew ? '<p class="help-text" style="margin-bottom:14px;">They are added at the end of the team list; use ↑ ↓ to move them.</p>' : ''}
+      <form data-submit="saveHomeSection" data-arg="${esc(view)}">
+        ${textField('name', 'Name', m.name, { live: live('name'), max: 100, required: true })}
+        ${textField('role', 'Role', m.role, { live: live('role'), max: 100, help: 'For example “Member”. Leave empty to show no role.' })}
+        ${textField('bio', 'About them', m.bio, { live: live('bio'), max: 3000, rows: 6 })}
+        ${picField('photo', live('photo'), 'Photo', m.photo, { help: 'A square-ish photo works best.' })}
+        ${formActions(isNew ? '' : `<button type="button" class="btn btn-danger" data-action="removeMember" data-arg="${esc(m.id)}">Remove from team</button>`)}
+      </form>`;
+  } else {
+    const row = (title, detail, view) => `<li><span class="grow"><strong>${esc(title)}</strong><br><span class="muted">${esc(detail)}</span></span>
+      <button type="button" class="btn btn-secondary btn-sm" data-action="openHomeView" data-arg="${esc(view)}">Edit</button></li>`;
+    panel.innerHTML = `<h3>Change the homepage</h3>
+      <p class="help-text">Click any picture or text on the page, or pick it here.</p>
+      <ul class="home-list">
+        ${page.hasHero ? row('Banner', `${page.hero.title} · picture`, 'hero') : ''}
+        ${page.hasAbout ? row('About', page.about.title, 'about') : ''}
+        ${page.hasTeam ? row('Team heading', page.team.title || '(no heading)', 'team') : ''}
+      </ul>
+      ${page.hasTeam ? `<h3 style="font-size:16px;">Team</h3>
+      <p class="help-text">Use ↑ ↓ to change the order on the website.</p>
+      <ul class="home-list">${team.map((m, i) => `<li>
+        <img src="${esc(m.photo ? thumb(m.photo, { width: 80 }) : PLACEHOLDER)}" alt="" data-fallback>
+        <span class="grow">${esc(m.name)}<br><span class="muted">${esc(m.role || '—')}</span></span>
+        <button type="button" class="icon-btn" data-action="moveMember" data-arg="${esc(m.id)}:-1" ${i === 0 ? 'disabled' : ''} aria-label="Move ${esc(m.name)} up">↑</button>
+        <button type="button" class="icon-btn" data-action="moveMember" data-arg="${esc(m.id)}:1" ${i === team.length - 1 ? 'disabled' : ''} aria-label="Move ${esc(m.name)} down">↓</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-action="openHomeView" data-arg="member:${esc(m.id)}">Edit</button>
+      </li>`).join('')}</ul>
+      <button type="button" class="btn btn-secondary btn-sm" data-action="openHomeView" data-arg="member:new">＋ Add team member</button>` : ''}`;
+  }
+}
+
+function setHomePic(name, url) {
+  const pic = document.querySelector(`#home-panel [data-pic="${name}"]`);
+  if (!pic) return;
+  pic.querySelector('input[type="hidden"]').value = url;
+  const shown = url || home.data.defaultBanner;
+  pic.querySelector('img').src = thumb(shown, { width: 640, height: 360, crop: 'limit' });
+  home.dirty = true;
+  if (pic.dataset.liveField) toFrame({ type: 'sapta-set', field: pic.dataset.liveField, value: frameImage(shown) });
+}
+
+function pickHomeFile(name) {
+  home.pickTarget = name;
+  document.getElementById('home-file').click();
+}
+
+async function uploadHomeImage(input) {
+  const file = input.files[0];
+  input.value = '';
+  const name = home.pickTarget;
+  const status = document.querySelector(`#home-panel [data-pic="${name}"] [data-status]`);
+  if (!file || !status) return;
+  if (!/^image\//.test(file.type) && !/\.(jpe?g|png|webp|heic|heif|gif)$/i.test(file.name)) return alert('Please choose a photo (JPG, PNG, WebP or HEIC).');
+  const buttons = status.parentElement.querySelectorAll('button');
+  buttons.forEach(b => { b.disabled = true; });
+  try {
+    if (!home.folderReady) {
+      // Homepage uploads get their own folder in the media library.
+      await api('/api/folders', { method: 'POST', json: { name: HOME_FOLDER } }).catch(err => { if (err.status !== 409) throw err; });
+      home.folderReady = true;
+    }
+    status.textContent = 'Uploading… 0%';
+    const { url } = await uploadToCloudinary(file, {
+      kind: 'photo', customFolder: HOME_FOLDER,
+      onProgress: p => { status.textContent = `Uploading… ${Math.round(p * 100)}%`; },
+    });
+    setHomePic(name, url);
+    status.textContent = 'Uploaded. Click Save to keep it.';
+    state.mediaStale = true;
+  } catch (err) {
+    status.textContent = '';
+    alert(`Upload failed: ${err.message}`);
+  } finally {
+    buttons.forEach(b => { b.disabled = false; });
+  }
+}
+
+function pickHomeFromLibrary(name) {
+  home.pickTarget = name;
+  openMediaPicker('home');
+}
+
+function useDefaultBanner() {
+  setHomePic('image', '');
+}
+
+async function saveHomeSection(e, view) {
+  if (state.uploadsInFlight > 0) return alert('Please wait for the upload to finish.');
+  const form = e.target.closest('form');
+  const fields = Object.fromEntries(new FormData(form));
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  let label = 'Homepage';
+  try {
+    if (['hero', 'about', 'team'].includes(view)) {
+      await api('/api/homepage', { method: 'POST', json: { section: view, fields, version: home.data.page.version } });
+      label = { hero: 'Banner', about: 'About section', team: 'Team heading' }[view];
+    } else if (view === 'member:new') {
+      if (!fields.photo) throw new Error('Add a photo first (Upload new picture, or Choose from library).');
+      await api('/api/team', { method: 'POST', json: fields });
+      label = fields.name;
+    } else {
+      const m = memberById(view.slice(7));
+      if (!fields.photo) throw new Error('A team member needs a photo.');
+      await api(`/api/team/${encodeURIComponent(m.id)}`, { method: 'POST', json: { ...fields, version: m.version } });
+      label = fields.name;
+    }
+  } catch (err) {
+    button.disabled = false;
+    alert(err.message);
+    if (err.status === 409) { home.dirty = false; await loadHomepage(); }
+    return;
+  }
+  showToast(savedMessage(label));
+  home.dirty = false;
+  home.view = 'overview';
+  home.selected = null;
+  await refreshHomepage();
+}
+
+async function refreshHomepage() {
+  await loadHomepage();
+  if (home.frameOpened) reloadHomeFrame();
+  loadDrafts();
+}
+
+async function moveMember(arg) {
+  const [id, step] = arg.split(':');
+  const team = [...home.data.team];
+  const from = team.findIndex(m => m.id === id);
+  const to = from + Number(step);
+  if (from < 0 || to < 0 || to >= team.length) return;
+  [team[from], team[to]] = [team[to], team[from]];
+  document.querySelectorAll('#home-panel .icon-btn').forEach(b => { b.disabled = true; });
+  try {
+    await api('/api/team/order', { method: 'POST', json: { members: team.map(m => ({ id: m.id, version: m.version })) } });
+  } catch (err) {
+    alert(err.message);
+  }
+  await refreshHomepage();
+}
+
+async function removeMember(id) {
+  const m = memberById(id);
+  if (!m) return;
+  if (!confirm(`Remove ${m.name} from the team on the website?${state.drafts ? '\n\nThis is a draft: you can still undo it with “Discard” before publishing.' : ''}`)) return;
+  try {
+    await api(`/api/team/${encodeURIComponent(id)}?version=${encodeURIComponent(m.version)}`, { method: 'DELETE' });
+    showToast(savedMessage(`Removing ${m.name}`));
+  } catch (err) {
+    alert(err.message);
+  }
+  home.dirty = false;
+  home.view = 'overview';
+  await refreshHomepage();
+}
+
+document.getElementById('home-panel').addEventListener('input', e => {
+  home.dirty = true;
+  const live = e.target.dataset.live;
+  if (live) toFrame({ type: 'sapta-set', field: live, value: e.target.value });
+});
+document.getElementById('home-panel').addEventListener('change', e => {
+  if (e.target.name === 'imageSide') home.dirty = true;
+});
+document.getElementById('home-frame').addEventListener('load', () => {
+  document.getElementById('home-frame-msg').hidden = true;
+});
+window.addEventListener('message', e => {
+  // Only messages from the homepage frame on the preview server.
+  if (!state.previewOrigin || e.origin !== state.previewOrigin || e.source !== document.getElementById('home-frame').contentWindow) return;
+  const data = e.data && typeof e.data === 'object' ? e.data : {};
+  if (data.type === 'sapta-edit' && typeof data.field === 'string') openHomeField(data.field);
+  else if (data.type === 'sapta-scroll') home.scrollY = Number(data.y) || 0;
+  else if (data.type === 'sapta-ready' && home.selected) toFrame({ type: 'sapta-select', field: home.selected });
+});
 
 // ---------- drafts ----------
 
@@ -1047,6 +1416,11 @@ function draftName(change) {
   if (change.kind === 'event') {
     const ev = state.events.find(e => e.slug === change.id);
     return `Event: ${ev ? ev.title : change.id}`;
+  }
+  if (change.kind === 'page') return change.id === 'home' ? 'Homepage' : change.id;
+  if (change.kind === 'team') {
+    const m = memberById(change.id);
+    return `Team: ${m ? m.name : change.id}`;
   }
   if (change.kind === 'registration') return `Registration: ${change.id === 'group' ? 'Group' : change.id === 'spotlight' ? 'SAPTA Spotlight' : change.id}`;
   return change.path;
@@ -1126,7 +1500,8 @@ async function discardDraft(key) {
   } catch (err) {
     alert(err.message);
   }
-  await Promise.all([loadEvents(), loadRegistrations()]);
+  await Promise.all([loadEvents(), loadRegistrations(), home.loaded && loadHomepage()]);
+  if (home.frameOpened) reloadHomeFrame();
   loadDrafts();
 }
 
@@ -1138,7 +1513,8 @@ async function discardAllDrafts() {
   } catch (err) {
     alert(err.message);
   }
-  await Promise.all([loadEvents(), loadRegistrations()]);
+  await Promise.all([loadEvents(), loadRegistrations(), home.loaded && loadHomepage()]);
+  if (home.frameOpened) reloadHomeFrame();
   loadDrafts();
 }
 
@@ -1298,9 +1674,10 @@ const clickActions = {
     : '/preview/events', '_blank', 'noopener'),
   selectPickerImage, moveRowUp, moveRowDown, removeRow, retryUpload, deleteMedia,
   pickFile: id => document.getElementById(id)?.click(),
+  homeViewport, openHomeView, homeBack, pickHomeFile, pickHomeFromLibrary, useDefaultBanner, moveMember, removeMember,
 };
-const changeActions = { handleQuickUpload, uploadFlyerFile, uploadGalleryFiles, uploadVideoFiles, moveMedia, toggleRegistrationStatus };
-const submitActions = { saveEvent, saveRegistration };
+const changeActions = { uploadHomeImage, handleQuickUpload, uploadFlyerFile, uploadGalleryFiles, uploadVideoFiles, moveMedia, toggleRegistrationStatus };
+const submitActions = { saveEvent, saveRegistration, saveHomeSection };
 
 document.addEventListener('click', e => {
   // Let clicks on file inputs through untouched, or the file dialog would not open.
