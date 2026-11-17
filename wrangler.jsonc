@@ -43,6 +43,8 @@
       "name": "sapta-admin-preview",
       "vars": {
         "ADMIN_ROLE": "preview",
+        // Only the admin may show preview pages inside its homepage editor.
+        "ADMIN_ORIGIN": "https://sapta-admin.artssapta.workers.dev",
         "CONTENT_STORE": "github",
         "GITHUB_REPO": "artssapta/sapta",
         "GITHUB_BRANCH": "main",

@@ -69,6 +69,16 @@ In **Registrations**, paste the form link, set the status to **Open**, Preview, 
 - While open, the page shows **Message when open** (or "Registration is open! …" if empty); the coming-soon message and note are hidden automatically. Switching back to **Coming soon** hides the form.
 - The site rebuilds every 6 hours, so changes to a form's settings in Google are picked up without publishing.
 
+### Homepage
+
+The **Homepage** tab shows the real homepage, built from your drafts. Hover over it and everything you can change gets outlined:
+
+- **Click a picture** (the banner, the About picture, a team photo), then **Upload new picture** or **Choose from library**. Uploads go to the *Homepage* folder in Cloudinary. **Use the original banner** brings the old one back.
+- **Click any text** (title, subtitle, About heading and text, names, roles, bios) and type. The page updates while you type.
+- **Layout:** put the About picture left or right of the text, move team members up or down, add a member, or remove one.
+- **Save draft** stores the change like any other draft: it shows in the yellow bar, can be discarded, and goes live with **Publish**. Pictures used on the homepage are never deleted from the media library.
+- **Computer / Phone** shows the page at either width.
+
 ### Folders
 
 Every event has its own folder automatically, and anyone can make extra folders that are not tied to an event (for rehearsals, posters, press photos…):
@@ -174,6 +184,7 @@ A preview build takes about 30–40 seconds. The preview copy sends a `noindex` 
 | `PREVIEW_URL` | `wrangler.jsonc` | Cloudflare Pages site built from the drafts branch |
 | `PREVIEW_DEPLOY_HOOK` | secret | Pages deploy hook URL; the admin calls it after each draft change |
 | `PREVIEW_ORIGIN` | `wrangler.jsonc` | Address of the preview server (instant previews) |
+| `ADMIN_ORIGIN` | `wrangler.jsonc` (preview server) | The admin's address: the only page allowed to show the homepage editor's frame |
 | `PREVIEW_SECRET` | secret, on **both** Workers | Signs/checks preview passes (same random value on `sapta-admin` and `sapta-admin-preview`: `openssl rand -hex 32`) |
 | `PUBLIC_URL` | `wrangler.jsonc` (optional) | Admin address if not the workers.dev one |
 | `SITE_URL` | `wrangler.jsonc` | Public site, used to preview `/assets/...` images |
@@ -268,6 +279,10 @@ All `/api/*` routes except `/api/me` need a session; changes also need `X-CSRF-T
 | `/api/drafts` | `GET` | Unpublished changes and preview status |
 | `/api/drafts/publish` | `POST` | `{head}` → publish all drafts (refused if they changed since `head`) |
 | `/api/drafts/discard` | `POST` | `{kind, id}` or `{all: true}` → restore the live version |
+| `/api/homepage` | `GET` / `POST` | Homepage banner, About and team heading; `{section, fields, version}` saves one section |
+| `/api/team` | `POST` | `{name, role, bio, photo}` → add a team member |
+| `/api/team/:id` | `POST` / `DELETE` | Edit (`version`) / remove (`?version=`) a member |
+| `/api/team/order` | `POST` | `{members: [{id, version}]}` → new display order |
 | `/api/uploads/sign` | `POST` | `{kind, event, filename, size}` → signed Cloudinary upload parameters |
 
 ---
