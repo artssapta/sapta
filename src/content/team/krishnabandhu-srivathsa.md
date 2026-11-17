@@ -1,6 +1,6 @@
 ---
 name: Krishnabandhu Srivathsa
-role: Co-Founder
+role: Member
 photo: /assets/team/krishnabandhu-srivathsa.png
 order: 2
 ---
