@@ -2,7 +2,7 @@
 name: Krishnabandhu Srivathsa
 role: Member
 photo: /assets/team/krishnabandhu-srivathsa.png
-order: 3
+order: 4
 ---
 
 Krishnabandhu Srivathsa is a sophomore at Amador Valley High School, Pleasanton. He has been pursuing vocal music, Carnatic flute, and the Western flute. His other interests include coding and electronics.
